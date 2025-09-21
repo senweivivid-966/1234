@@ -87,11 +87,14 @@
             background: rgba(0, 0, 0, 0.85);
             padding: 25px;
             border-radius: 15px;
-            min-width: 300px;
+            min-width: 280px;
+            max-width: 320px;
             backdrop-filter: blur(15px);
             border: 1px solid rgba(79, 172, 254, 0.3);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             z-index: 1000;
+            max-height: 60vh;
+            overflow-y: auto;
         }
         
         .calculation-result {
@@ -122,10 +125,12 @@
             background: rgba(0, 0, 0, 0.85);
             padding: 20px;
             border-radius: 15px;
-            max-width: 350px;
+            max-width: 280px;
             backdrop-filter: blur(15px);
             border: 1px solid rgba(79, 172, 254, 0.3);
             z-index: 1000;
+            max-height: 50vh;
+            overflow-y: auto;
         }
         
         .triangle-presets {
@@ -136,14 +141,14 @@
             display: block;
             width: 100%;
             margin: 8px 0;
-            padding: 10px 15px;
+            padding: 8px 12px;
             background: rgba(155, 89, 182, 0.3);
             border: 1px solid rgba(155, 89, 182, 0.5);
             color: white;
             border-radius: 20px;
             cursor: pointer;
             transition: all 0.3s ease;
-            font-size: 14px;
+            font-size: 13px;
         }
         
         .preset-btn:hover {
@@ -162,15 +167,17 @@
             .info-panel {
                 right: 10px;
                 top: 80px;
-                min-width: 250px;
-                padding: 20px;
+                min-width: 220px;
+                padding: 15px;
+                font-size: 14px;
             }
             
             .instructions {
                 left: 10px;
                 bottom: 100px;
-                max-width: 280px;
+                max-width: 220px;
                 padding: 15px;
+                font-size: 14px;
             }
             
             .controls {
@@ -235,10 +242,10 @@
             
             <div class="triangle-presets">
                 <h5>经典三角形:</h5>
-                <button class="preset-btn" onclick="setTriangle(3, 4, 5)">3-4-5 直角三角形</button>
-                <button class="preset-btn" onclick="setTriangle(5, 12, 13)">5-12-13 直角三角形</button>
-                <button class="preset-btn" onclick="setTriangle(8, 15, 17)">8-15-17 直角三角形</button>
-                <button class="preset-btn" onclick="setTriangle(7, 24, 25)">7-24-25 直角三角形</button>
+                <button class="preset-btn" onclick="setTriangle(3, 4, 5)">3-4-5</button>
+                <button class="preset-btn" onclick="setTriangle(5, 12, 13)">5-12-13</button>
+                <button class="preset-btn" onclick="setTriangle(8, 15, 17)">8-15-17</button>
+                <button class="preset-btn" onclick="setTriangle(7, 24, 25)">7-24-25</button>
             </div>
         </div>
     </div>
@@ -250,11 +257,18 @@
                 this.ctx = this.canvas.getContext('2d');
                 this.resizeCanvas();
                 
-                // 三角形顶点
+                // 动态缩放比例，根据屏幕尺寸调整
+                this.scale = this.calculateOptimalScale();
+                
+                // 计算居中位置
+                const centerX = this.canvas.width / 2;
+                const centerY = this.canvas.height / 2;
+                
+                // 三角形顶点 - 使用更合理的初始位置和尺寸
                 this.triangle = {
-                    A: { x: 200, y: 300 },
-                    B: { x: 500, y: 300 },
-                    C: { x: 200, y: 100 }
+                    A: { x: centerX - 80, y: centerY + 40 },  // 左下
+                    B: { x: centerX + 80, y: centerY + 40 },  // 右下
+                    C: { x: centerX - 80, y: centerY - 60 }   // 左上
                 };
                 
                 // 控制状态
@@ -268,6 +282,12 @@
                 this.animate();
             }
             
+            calculateOptimalScale() {
+                // 根据画布尺寸动态计算缩放比例
+                const baseScale = Math.min(this.canvas.width, this.canvas.height) / 20;
+                return Math.max(20, Math.min(40, baseScale)); // 限制在20-40之间
+            }
+            
             resizeCanvas() {
                 const header = document.querySelector('.header');
                 const controls = document.querySelector('.controls');
@@ -276,6 +296,9 @@
                 
                 this.canvas.width = window.innerWidth;
                 this.canvas.height = window.innerHeight - headerHeight - controlsHeight;
+                
+                // 重新计算缩放比例
+                this.scale = this.calculateOptimalScale();
             }
             
             setupEventListeners() {
@@ -300,7 +323,21 @@
                 
                 window.addEventListener('resize', () => {
                     this.resizeCanvas();
+                    this.repositionTriangle();
                 });
+            }
+            
+            repositionTriangle() {
+                // 窗口调整大小时重新定位三角形到中心
+                const centerX = this.canvas.width / 2;
+                const centerY = this.canvas.height / 2;
+                
+                this.triangle = {
+                    A: { x: centerX - 80, y: centerY + 40 },
+                    B: { x: centerX + 80, y: centerY + 40 },
+                    C: { x: centerX - 80, y: centerY - 60 }
+                };
+                this.updateCalculations();
             }
             
             getEventPos(e) {
@@ -332,9 +369,10 @@
                 
                 const pos = this.getEventPos(e);
                 
-                // 限制拖动范围
-                pos.x = Math.max(50, Math.min(this.canvas.width - 50, pos.x));
-                pos.y = Math.max(50, Math.min(this.canvas.height - 50, pos.y));
+                // 限制拖动范围，留出足够空间给正方形
+                const margin = 150;
+                pos.x = Math.max(margin, Math.min(this.canvas.width - margin, pos.x));
+                pos.y = Math.max(margin, Math.min(this.canvas.height - margin, pos.y));
                 
                 this.triangle[this.dragPoint] = pos;
                 this.updateCalculations();
@@ -348,9 +386,9 @@
             calculateSides() {
                 const { A, B, C } = this.triangle;
                 
-                const a = Math.sqrt((B.x - C.x) ** 2 + (B.y - C.y) ** 2) / 50; // BC
-                const b = Math.sqrt((A.x - C.x) ** 2 + (A.y - C.y) ** 2) / 50; // AC  
-                const c = Math.sqrt((A.x - B.x) ** 2 + (A.y - B.y) ** 2) / 50; // AB
+                const a = Math.sqrt((B.x - C.x) ** 2 + (B.y - C.y) ** 2) / this.scale; // BC
+                const b = Math.sqrt((A.x - C.x) ** 2 + (A.y - C.y) ** 2) / this.scale; // AC  
+                const c = Math.sqrt((A.x - B.x) ** 2 + (A.y - B.y) ** 2) / this.scale; // AB
                 
                 return { a, b, c };
             }
@@ -406,14 +444,16 @@
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
                 ctx.lineWidth = 1;
                 
-                for (let x = 0; x < this.canvas.width; x += 50) {
+                const gridSize = this.scale;
+                
+                for (let x = 0; x < this.canvas.width; x += gridSize) {
                     ctx.beginPath();
                     ctx.moveTo(x, 0);
                     ctx.lineTo(x, this.canvas.height);
                     ctx.stroke();
                 }
                 
-                for (let y = 0; y < this.canvas.height; y += 50) {
+                for (let y = 0; y < this.canvas.height; y += gridSize) {
                     ctx.beginPath();
                     ctx.moveTo(0, y);
                     ctx.lineTo(this.canvas.width, y);
@@ -425,56 +465,59 @@
                 const { A, B, C } = this.triangle;
                 const { a, b, c } = this.calculateSides();
                 
-                const scale = 50;
+                const squareScale = this.scale * 0.6; // 缩小正方形尺寸
                 
-                // 绿色正方形 (c²) - 位置调整到三角形左边
-                const greenSquareX = A.x - c * scale - 50; // 向左偏移
-                const greenSquareY = A.y - c * scale / 2;
+                // 计算三角形的边界
+                const minX = Math.min(A.x, B.x, C.x);
+                const maxX = Math.max(A.x, B.x, C.x);
+                const minY = Math.min(A.y, B.y, C.y);
+                const maxY = Math.max(A.y, B.y, C.y);
                 
-                this.ctx.fillStyle = 'rgba(46, 204, 113, 0.7)';
-                this.ctx.strokeStyle = '#2ecc71';
-                this.ctx.lineWidth = 3;
-                this.ctx.fillRect(greenSquareX, greenSquareY, c * scale, c * scale);
-                this.ctx.strokeRect(greenSquareX, greenSquareY, c * scale, c * scale);
+                // 绿色正方形 (c²) - 放在三角形左侧，避免遮挡
+                const greenSize = c * squareScale;
+                const greenX = minX - greenSize - 30;
+                const greenY = (minY + maxY) / 2 - greenSize / 2;
                 
-                // 红色正方形 (a²) - BC边
-                const redSquareVector = this.getPerpendicularVector(B, C, a * scale);
-                this.ctx.fillStyle = 'rgba(231, 76, 60, 0.7)';
-                this.ctx.strokeStyle = '#e74c3c';
-                this.ctx.fillRect(B.x, B.y, redSquareVector.x, redSquareVector.y);
-                this.ctx.strokeRect(B.x, B.y, redSquareVector.x, redSquareVector.y);
+                this.drawSquare(greenX, greenY, greenSize, '#2ecc71', `c² = ${(c*c).toFixed(1)}`);
                 
-                // 蓝色正方形 (b²) - AC边
-                const blueSquareVector = this.getPerpendicularVector(A, C, b * scale);
-                this.ctx.fillStyle = 'rgba(52, 152, 219, 0.7)';
-                this.ctx.strokeStyle = '#3498db';
-                this.ctx.fillRect(A.x, A.y, blueSquareVector.x, blueSquareVector.y);
-                this.ctx.strokeRect(A.x, A.y, blueSquareVector.x, blueSquareVector.y);
+                // 红色正方形 (a²) - 放在三角形右侧
+                const redSize = a * squareScale;
+                const redX = maxX + 30;
+                const redY = (minY + maxY) / 2 - redSize / 2;
                 
-                // 在正方形中心添加标签
-                this.ctx.fillStyle = 'white';
-                this.ctx.font = 'bold 16px Arial';
-                this.ctx.textAlign = 'center';
-                this.ctx.fillText(`c² = ${(c*c).toFixed(1)}`, 
-                    greenSquareX + c * scale / 2, greenSquareY + c * scale / 2);
-                this.ctx.fillText(`a² = ${(a*a).toFixed(1)}`, 
-                    B.x + redSquareVector.x / 2, B.y + redSquareVector.y / 2);
-                this.ctx.fillText(`b² = ${(b*b).toFixed(1)}`, 
-                    A.x + blueSquareVector.x / 2, A.y + blueSquareVector.y / 2);
+                this.drawSquare(redX, redY, redSize, '#e74c3c', `a² = ${(a*a).toFixed(1)}`);
+                
+                // 蓝色正方形 (b²) - 放在三角形上方
+                const blueSize = b * squareScale;
+                const blueX = (minX + maxX) / 2 - blueSize / 2;
+                const blueY = minY - blueSize - 30;
+                
+                this.drawSquare(blueX, blueY, blueSize, '#3498db', `b² = ${(b*b).toFixed(1)}`);
             }
             
-            getPerpendicularVector(start, end, length) {
-                const dx = end.x - start.x;
-                const dy = end.y - start.y;
-                const magnitude = Math.sqrt(dx * dx + dy * dy);
+            drawSquare(x, y, size, color, label) {
+                const ctx = this.ctx;
                 
-                const unitX = dx / magnitude;
-                const unitY = dy / magnitude;
+                // 绘制正方形
+                ctx.fillStyle = color.replace('#', 'rgba(').replace('#', '') + '0.7)'.replace(')', '');
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.fillRect(x, y, size, size);
+                ctx.strokeRect(x, y, size, size);
                 
-                return {
-                    x: -unitY * length,
-                    y: unitX * length
-                };
+                // 添加标签
+                ctx.fillStyle = 'white';
+                ctx.font = `bold ${Math.max(12, size / 8)}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                // 背景
+                const textWidth = ctx.measureText(label).width;
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(x + size/2 - textWidth/2 - 5, y + size/2 - 10, textWidth + 10, 20);
+                
+                ctx.fillStyle = 'white';
+                ctx.fillText(label, x + size / 2, y + size / 2);
             }
             
             drawTriangle() {
@@ -482,7 +525,7 @@
                 const { A, B, C } = this.triangle;
                 
                 ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 4;
+                ctx.lineWidth = 3;
                 ctx.beginPath();
                 ctx.moveTo(A.x, A.y);
                 ctx.lineTo(B.x, B.y);
@@ -491,7 +534,7 @@
                 ctx.stroke();
                 
                 // 填充
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
                 ctx.fill();
             }
             
@@ -503,11 +546,11 @@
                     
                     ctx.fillStyle = this.isDragging && this.dragPoint === point ? '#f39c12' : '#e74c3c';
                     ctx.beginPath();
-                    ctx.arc(vertex.x, vertex.y, 12, 0, 2 * Math.PI);
+                    ctx.arc(vertex.x, vertex.y, 10, 0, 2 * Math.PI);
                     ctx.fill();
                     
                     ctx.strokeStyle = '#ffffff';
-                    ctx.lineWidth = 3;
+                    ctx.lineWidth = 2;
                     ctx.stroke();
                 }
             }
@@ -518,24 +561,35 @@
                 const { a, b, c } = this.calculateSides();
                 
                 ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 18px Arial';
+                ctx.font = 'bold 16px Arial';
                 ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
                 
                 // 顶点标签
-                ctx.fillText('A', A.x - 25, A.y - 15);
-                ctx.fillText('B', B.x + 25, B.y - 15);
-                ctx.fillText('C', C.x - 25, C.y + 35);
+                ctx.fillText('A', A.x - 20, A.y - 20);
+                ctx.fillText('B', B.x + 20, B.y - 20);
+                ctx.fillText('C', C.x - 20, C.y + 25);
                 
                 // 边长标签
-                const midAB = { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2 - 20 };
-                const midBC = { x: (B.x + C.x) / 2 + 20, y: (B.y + C.y) / 2 };
-                const midAC = { x: (A.x + C.x) / 2 - 20, y: (A.y + C.y) / 2 };
+                const midAB = { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2 + 25 };
+                const midBC = { x: (B.x + C.x) / 2 + 25, y: (B.y + C.y) / 2 };
+                const midAC = { x: (A.x + C.x) / 2 - 25, y: (A.y + C.y) / 2 };
                 
                 ctx.fillStyle = '#4facfe';
                 ctx.font = 'bold 14px Arial';
-                ctx.fillText(`c = ${c.toFixed(2)}`, midAB.x, midAB.y);
-                ctx.fillText(`a = ${a.toFixed(2)}`, midBC.x, midBC.y);
-                ctx.fillText(`b = ${b.toFixed(2)}`, midAC.x, midAC.y);
+                
+                // 添加背景
+                this.drawTextWithBackground(ctx, `c = ${c.toFixed(2)}`, midAB.x, midAB.y);
+                this.drawTextWithBackground(ctx, `a = ${a.toFixed(2)}`, midBC.x, midBC.y);
+                this.drawTextWithBackground(ctx, `b = ${b.toFixed(2)}`, midAC.x, midAC.y);
+            }
+            
+            drawTextWithBackground(ctx, text, x, y) {
+                const metrics = ctx.measureText(text);
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(x - metrics.width/2 - 3, y - 8, metrics.width + 6, 16);
+                ctx.fillStyle = '#4facfe';
+                ctx.fillText(text, x, y);
             }
             
             animate() {
@@ -548,20 +602,26 @@
         let demo;
         
         function resetTriangle() {
+            const centerX = demo.canvas.width / 2;
+            const centerY = demo.canvas.height / 2;
+            
             demo.triangle = {
-                A: { x: 200, y: 300 },
-                B: { x: 500, y: 300 },
-                C: { x: 200, y: 100 }
+                A: { x: centerX - 80, y: centerY + 40 },
+                B: { x: centerX + 80, y: centerY + 40 },
+                C: { x: centerX - 80, y: centerY - 60 }
             };
             demo.updateCalculations();
         }
         
         function setTriangle(a, b, c) {
-            const scale = 50;
+            const centerX = demo.canvas.width / 2;
+            const centerY = demo.canvas.height / 2;
+            const scale = demo.scale;
+            
             demo.triangle = {
-                A: { x: 200, y: 300 },
-                B: { x: 200 + c * scale, y: 300 },
-                C: { x: 200, y: 300 - b * scale }
+                A: { x: centerX - c * scale / 2, y: centerY + 20 },
+                B: { x: centerX + c * scale / 2, y: centerY + 20 },
+                C: { x: centerX - c * scale / 2, y: centerY - b * scale + 20 }
             };
             demo.updateCalculations();
         }
@@ -632,4 +692,5 @@
     </script>
 </body>
 </html>
+
 
