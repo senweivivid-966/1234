@@ -75,10 +75,6 @@
             box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
         }
         
-        .btn:active {
-            transform: translateY(0);
-        }
-        
         .info-panel {
             position: fixed;
             top: 100px;
@@ -107,11 +103,6 @@
             font-weight: bold;
             margin-bottom: 10px;
             color: #4facfe;
-        }
-        
-        .result {
-            font-size: 16px;
-            color: #2ecc71;
         }
         
         .instructions {
@@ -165,35 +156,6 @@
             display: none;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         }
-        
-        @media (max-width: 768px) {
-            .info-panel {
-                right: 10px;
-                top: 80px;
-                min-width: 250px;
-                padding: 20px;
-            }
-            
-            .instructions {
-                left: 10px;
-                bottom: 100px;
-                max-width: 280px;
-                padding: 15px;
-            }
-            
-            .controls {
-                padding: 10px;
-                gap: 10px;
-                min-height: 70px;
-            }
-            
-            .btn {
-                padding: 8px 16px;
-                font-size: 12px;
-                min-width: 100px;
-                height: 40px;
-            }
-        }
     </style>
 </head>
 <body>
@@ -215,14 +177,14 @@
         <div class="info-panel">
             <h4>实时数据验证</h4>
             <div id="realTimeData">
-                <div>• 红色面积 (c²): <span id="areaRed" style="color: #e74c3c;">41</span></div>
+                <div>• 红色面积 (c²): <span id="areaRed" style="color: #e74c3c;">25</span></div>
                 <div>• 蓝色面积 (a²): <span id="areaBlue" style="color: #3498db;">16</span></div>
-                <div>• 绿色面积 (b²): <span id="areaGreen" style="color: #2ecc71;">25</span></div>
+                <div>• 绿色面积 (b²): <span id="areaGreen" style="color: #2ecc71;">9</span></div>
             </div>
             
             <div class="calculation-result">
-                <div class="formula" id="verification">41 = 16 + 25 ✓</div>
-                <div class="result">记录数据: <span id="recordCount">1/3 组</span></div>
+                <div class="formula" id="verification">25 = 16 + 9 ✓</div>
+                <div class="result">记录数据: <span id="recordCount">0/3 组</span></div>
             </div>
         </div>
         
@@ -254,21 +216,19 @@
                 this.ctx = this.canvas.getContext('2d');
                 this.resizeCanvas();
                 
-                // 使用更大的比例尺
-                this.scale = 60;
+                this.scale = 50;
                 
-                // 计算居中位置
-                const centerX = this.canvas.width / 2;
+                // 计算居中位置，为整个图形组合留出空间
+                const centerX = this.canvas.width / 2 - 50;
                 const centerY = this.canvas.height / 2;
                 
-                // 三角形顶点 - 使用更大的尺寸
+                // 直角三角形顶点 - 参考图片中的布局
                 this.triangle = {
-                    A: { x: centerX - 100, y: centerY + 80 },  // 左下
-                    B: { x: centerX + 120, y: centerY + 80 },  // 右下  
-                    C: { x: centerX - 100, y: centerY - 100 }  // 左上（直角顶点）
+                    A: { x: centerX - 60, y: centerY + 60 },  // 左下角
+                    B: { x: centerX + 80, y: centerY + 60 },  // 右下角
+                    C: { x: centerX - 60, y: centerY - 80 }   // 左上角（直角顶点）
                 };
                 
-                // 控制状态
                 this.isDragging = false;
                 this.dragPoint = null;
                 this.showGrid = true;
@@ -290,12 +250,10 @@
             }
             
             setupEventListeners() {
-                // 鼠标事件
                 this.canvas.addEventListener('mousedown', (e) => this.handleStart(e));
                 this.canvas.addEventListener('mousemove', (e) => this.handleMove(e));
                 this.canvas.addEventListener('mouseup', () => this.handleEnd());
                 
-                // 触摸事件
                 this.canvas.addEventListener('touchstart', (e) => {
                     e.preventDefault();
                     this.handleStart(e.touches[0]);
@@ -316,13 +274,13 @@
             }
             
             repositionTriangle() {
-                const centerX = this.canvas.width / 2;
+                const centerX = this.canvas.width / 2 - 50;
                 const centerY = this.canvas.height / 2;
                 
                 this.triangle = {
-                    A: { x: centerX - 100, y: centerY + 80 },
-                    B: { x: centerX + 120, y: centerY + 80 },
-                    C: { x: centerX - 100, y: centerY - 100 }
+                    A: { x: centerX - 60, y: centerY + 60 },
+                    B: { x: centerX + 80, y: centerY + 60 },
+                    C: { x: centerX - 60, y: centerY - 80 }
                 };
                 this.updateCalculations();
             }
@@ -338,7 +296,6 @@
             handleStart(e) {
                 const pos = this.getEventPos(e);
                 
-                // 检查是否点击了顶点
                 for (let point in this.triangle) {
                     const vertex = this.triangle[point];
                     const distance = Math.sqrt((pos.x - vertex.x) ** 2 + (pos.y - vertex.y) ** 2);
@@ -355,9 +312,7 @@
                 if (!this.isDragging || !this.dragPoint) return;
                 
                 const pos = this.getEventPos(e);
-                
-                // 限制拖动范围
-                pos.x = Math.max(120, Math.min(this.canvas.width - 120, pos.x));
+                pos.x = Math.max(120, Math.min(this.canvas.width - 200, pos.x));
                 pos.y = Math.max(80, Math.min(this.canvas.height - 80, pos.y));
                 
                 this.triangle[this.dragPoint] = pos;
@@ -386,12 +341,10 @@
                 const bSquared = b * b;
                 const cSquared = c * c;
                 
-                // 更新右侧面板显示
                 document.getElementById('areaRed').textContent = cSquared.toFixed(1);
                 document.getElementById('areaBlue').textContent = aSquared.toFixed(1);
                 document.getElementById('areaGreen').textContent = bSquared.toFixed(1);
                 
-                // 验证结果
                 const difference = Math.abs((aSquared + bSquared) - cSquared);
                 const verification = document.getElementById('verification');
                 
@@ -422,14 +375,14 @@
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
                 ctx.lineWidth = 1;
                 
-                for (let x = 0; x < this.canvas.width; x += 30) {
+                for (let x = 0; x < this.canvas.width; x += 25) {
                     ctx.beginPath();
                     ctx.moveTo(x, 0);
                     ctx.lineTo(x, this.canvas.height);
                     ctx.stroke();
                 }
                 
-                for (let y = 0; y < this.canvas.height; y += 30) {
+                for (let y = 0; y < this.canvas.height; y += 25) {
                     ctx.beginPath();
                     ctx.moveTo(0, y);
                     ctx.lineTo(this.canvas.width, y);
@@ -441,57 +394,67 @@
                 const { A, B, C } = this.triangle;
                 const { a, b, c } = this.calculateSides();
                 
-                const squareScale = this.scale;
+                const scale = this.scale;
                 
-                // 绿色正方形 (b²) - AC边，放在三角形左边
-                const greenSize = b * squareScale;
-                const greenX = Math.min(A.x, C.x) - greenSize - 40;
-                const greenY = (A.y + C.y) / 2 - greenSize / 2;
+                // 计算各边的方向向量和垂直向量
+                // 边 AB (底边，对应c)
+                const abVec = { x: B.x - A.x, y: B.y - A.y };
+                const abLength = Math.sqrt(abVec.x * abVec.x + abVec.y * abVec.y);
+                const abUnit = { x: abVec.x / abLength, y: abVec.y / abLength };
+                const abPerp = { x: -abUnit.y, y: abUnit.x }; // 向下的垂直向量
                 
-                this.drawSquare(greenX, greenY, greenSize, '#2ecc71', `b² = ${(b*b).toFixed(1)}`);
+                // 边 BC (右边，对应a)  
+                const bcVec = { x: C.x - B.x, y: C.y - B.y };
+                const bcLength = Math.sqrt(bcVec.x * bcVec.x + bcVec.y * bcVec.y);
+                const bcUnit = { x: bcVec.x / bcLength, y: bcVec.y / bcLength };
+                const bcPerp = { x: bcUnit.y, y: -bcUnit.x }; // 向右的垂直向量
                 
-                // 红色正方形 (c²) - AB边，放在三角形右边
-                const redSize = c * squareScale;
-                const redX = Math.max(A.x, B.x) + 30;
-                const redY = (A.y + B.y) / 2 - redSize / 2;
+                // 边 CA (左边，对应b)
+                const caVec = { x: A.x - C.x, y: A.y - C.y };
+                const caLength = Math.sqrt(caVec.x * caVec.x + caVec.y * caVec.y);
+                const caUnit = { x: caVec.x / caLength, y: caVec.y / caLength };
+                const caPerp = { x: -caUnit.y, y: caUnit.x }; // 向左的垂直向量
                 
-                this.drawSquare(redX, redY, redSize, '#e74c3c', `c² = ${(c*c).toFixed(1)}`);
+                // 红色正方形 (c²) - 基于底边AB，向下绘制
+                this.drawSquareOnEdge(A, B, abPerp, '#e74c3c', `c² = ${(c*c).toFixed(1)}`);
                 
-                // 蓝色正方形 (a²) - BC边，放在三角形下方
-                const blueSize = a * squareScale;
-                const blueX = (B.x + C.x) / 2 - blueSize / 2;
-                const blueY = Math.max(B.y, C.y) + 30;
+                // 蓝色正方形 (a²) - 基于右边BC，向右绘制  
+                this.drawSquareOnEdge(B, C, bcPerp, '#3498db', `a² = ${(a*a).toFixed(1)}`);
                 
-                this.drawSquare(blueX, blueY, blueSize, '#3498db', `a² = ${(a*a).toFixed(1)}`);
+                // 绿色正方形 (b²) - 基于左边CA，向左绘制
+                this.drawSquareOnEdge(C, A, caPerp, '#2ecc71', `b² = ${(b*b).toFixed(1)}`);
             }
             
-            drawSquare(x, y, size, color, label) {
+            drawSquareOnEdge(p1, p2, perpVec, color, label) {
                 const ctx = this.ctx;
                 
-                // 确保正方形完全在画布内
-                x = Math.max(10, Math.min(this.canvas.width - size - 10, x));
-                y = Math.max(10, Math.min(this.canvas.height - size - 10, y));
+                // 计算正方形的四个顶点
+                const square = [
+                    p1,
+                    p2,
+                    { x: p2.x + perpVec.x * Math.abs(p2.x - p1.x), y: p2.y + perpVec.y * Math.abs(p2.y - p1.y) },
+                    { x: p1.x + perpVec.x * Math.abs(p2.x - p1.x), y: p1.y + perpVec.y * Math.abs(p2.y - p1.y) }
+                ];
                 
                 // 绘制正方形
-                ctx.fillStyle = color + '80'; // 添加透明度
+                ctx.fillStyle = color + '60'; // 60% 透明度
                 ctx.strokeStyle = color;
                 ctx.lineWidth = 3;
-                ctx.fillRect(x, y, size, size);
-                ctx.strokeRect(x, y, size, size);
                 
-                // 添加标签
-                ctx.fillStyle = 'white';
-                ctx.font = `bold ${Math.max(14, size / 12)}px Arial`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
+                ctx.beginPath();
+                ctx.moveTo(square[0].x, square[0].y);
+                for (let i = 1; i < square.length; i++) {
+                    ctx.lineTo(square[i].x, square[i].y);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
                 
-                // 标签背景
-                const textWidth = ctx.measureText(label).width;
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-                ctx.fillRect(x + size/2 - textWidth/2 - 8, y + size/2 - 12, textWidth + 16, 24);
+                // 添加标签到正方形中心
+                const centerX = (square[0].x + square[1].x + square[2].x + square[3].x) / 4;
+                const centerY = (square[0].y + square[1].y + square[2].y + square[3].y) / 4;
                 
-                ctx.fillStyle = 'white';
-                ctx.fillText(label, x + size / 2, y + size / 2);
+                this.drawTextWithBackground(ctx, label, centerX, centerY, 'white');
             }
             
             drawTriangle() {
@@ -507,7 +470,6 @@
                 ctx.closePath();
                 ctx.stroke();
                 
-                // 填充
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
                 ctx.fill();
             }
@@ -551,7 +513,7 @@
                 this.drawTextWithBackground(ctx, 'C', C.x - 25, C.y + 30, '#ffffff');
                 
                 // 边长标签
-                const midAB = { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2 + 30 };
+                const midAB = { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2 + 25 };
                 const midBC = { x: (B.x + C.x) / 2 + 25, y: (B.y + C.y) / 2 };
                 const midAC = { x: (A.x + C.x) / 2 - 25, y: (A.y + C.y) / 2 };
                 
@@ -564,8 +526,12 @@
             
             drawTextWithBackground(ctx, text, x, y, color) {
                 const metrics = ctx.measureText(text);
+                const padding = 6;
+                const height = 20;
+                
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-                ctx.fillRect(x - metrics.width/2 - 6, y - 12, metrics.width + 12, 24);
+                ctx.fillRect(x - metrics.width/2 - padding, y - height/2, metrics.width + padding*2, height);
+                
                 ctx.fillStyle = color;
                 ctx.fillText(text, x, y);
             }
@@ -581,21 +547,21 @@
         let recordedData = [];
         
         function resetTriangle() {
-            const centerX = demo.canvas.width / 2;
+            const centerX = demo.canvas.width / 2 - 50;
             const centerY = demo.canvas.height / 2;
             
             demo.triangle = {
-                A: { x: centerX - 100, y: centerY + 80 },
-                B: { x: centerX + 120, y: centerY + 80 },
-                C: { x: centerX - 100, y: centerY - 100 }
+                A: { x: centerX - 60, y: centerY + 60 },
+                B: { x: centerX + 80, y: centerY + 60 },
+                C: { x: centerX - 60, y: centerY - 80 }
             };
             demo.updateCalculations();
         }
         
         function setTriangle(a, b, c) {
-            const centerX = demo.canvas.width / 2;
+            const centerX = demo.canvas.width / 2 - 50;
             const centerY = demo.canvas.height / 2;
-            const scale = demo.scale;
+            const scale = demo.scale * 0.8;
             
             demo.triangle = {
                 A: { x: centerX - c * scale / 2, y: centerY + 40 },
@@ -656,10 +622,8 @@
             
             recordedData.push(currentData);
             
-            // 更新记录计数
             document.getElementById('recordCount').textContent = `${recordedData.length}/3 组`;
             
-            // 导出数据
             const exportContent = {
                 课程: '勾股定理AR探索实验',
                 课本页码: '第86页',
@@ -675,7 +639,6 @@
             link.download = `勾股定理实验数据_${recordedData.length}组_${new Date().toLocaleDateString()}.json`;
             link.click();
             
-            // 显示导出成功提示
             const statusDiv = document.getElementById('exportStatus');
             statusDiv.style.display = 'block';
             statusDiv.textContent = `第${recordedData.length}组数据已成功记录并导出！`;
@@ -685,7 +648,6 @@
             }, 3000);
         }
         
-        // 初始化
         window.onload = function() {
             demo = new PythagoreanDemo();
             setTimeout(() => {
