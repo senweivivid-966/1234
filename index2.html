@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数轴上的无理数√n - AR构造演示</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+            touch-action: manipulation;
+        }
+        
+        .container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        canvas {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+        }
+        
+        .header {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px 20px;
+            backdrop-filter: blur(10px);
+            text-align: center;
+            border-bottom: 2px solid #3498db;
+        }
+        
+        .toolbar {
+            background: rgba(0, 0, 0, 0.9);
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            backdrop-filter: blur(15px);
+            border-top: 2px solid #3498db;
+        }
+        
+        .tool-btn {
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 100px;
+            justify-content: center;
+        }
+        
+        .tool-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+        
+        .tool-btn.active {
+            background: #e74c3c;
+            box-shadow: 0 0 15px rgba(231, 76, 60, 0.5);
+        }
+        
+        .tool-btn:disabled {
+            background: #7f8c8d;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        
+        .info-panel {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 20px;
+            border-radius: 15px;
+            min-width: 300px;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(52, 152, 219, 0.3);
+            z-index: 1000;
+        }
+        
+        .step-info {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(52, 152, 219, 0.2);
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .calculation {
+            background: rgba(46, 204, 113, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            border: 2px solid #2ecc71;
+        }
+        
+        .instructions {
+            position: fixed;
+            bottom: 80px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 15px;
+            border-radius: 10px;
+            max-width: 350px;
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+        }
+        
+        .construction-list {
+            margin-top: 15px;
+        }
+        
+        .construction-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            margin: 5px 0;
+            background: rgba(155, 89, 182, 0.2);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .construction-item:hover {
+            background: rgba(155, 89, 182, 0.4);
+            transform: translateX(5px);
+        }
+        
+        .target-display {
+            font-size: 18px;
+            font-weight: bold;
+            color: #f39c12;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .info-panel {
+                right: 10px;
+                top: 70px;
+                min-width: 250px;
+                padding: 15px;
+            }
+            
+            .instructions {
+                left: 10px;
+                bottom: 70px;
+                max-width: 280px;
+            }
+            
+            .toolbar {
+                padding: 10px;
+                gap: 10px;
+            }
+            
+            .tool-btn {
+                padding: 8px 16px;
+                font-size: 12px;
+                min-width: 80px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <h2>数轴上的无理数√n - 几何构造法</h2>
+            <p>通过直角三角形构造并在数轴上定位无理数</p>
+        </div>
+        
+        <!-- 主画布 -->
+        <canvas id="canvas"></canvas>
+        
+        <!-- 工具栏 -->
+        <div class="toolbar">
+            <button class="tool-btn active" id="pointTool" data-tool="point">
+                📍 点工具
+            </button>
+            <button class="tool-btn" id="lineTool" data-tool="line">
+                📏 直线工具
+            </button>
+            <button class="tool-btn" id="compassTool" data-tool="compass">
+                📐 圆规工具
+            </button>
+            <button class="tool-btn" id="resetBtn">
+                🔄 重置
+            </button>
+            <button class="tool-btn" id="nextStepBtn">
+                ➡️ 下一步
+            </button>
+        </div>
+    </div>
+    
+    <!-- 信息面板 -->
+    <div class="info-panel">
+        <div class="target-display" id="targetDisplay">
+            目标: 构造 √5
+        </div>
+        <div class="step-info" id="stepInfo">
+            第1步: 在原点(0,0)和点(2,0)处各点一个点
+        </div>
+        <div class="calculation" id="calculation">
+            √(2² + 1²) = √5 ≈ 2.236
+        </div>
+        <div style="text-align: center; font-size: 12px; opacity: 0.8;">
+            当前工具: <span id="currentTool">点工具</span>
+        </div>
+    </div>
+    
+    <!-- 操作说明 -->
+    <div class="instructions">
+        <h4>构造步骤</h4>
+        <div class="construction-list">
+            <div class="construction-item" onclick="setTarget(2)">
+                <span>√2</span> <small>(1² + 1²)</small>
+            </div>
+            <div class="construction-item" onclick="setTarget(5)">
+                <span>√5</span> <small>(2² + 1²)</small>
+            </div>
+            <div class="construction-item" onclick="setTarget(8)">
+                <span>√8</span> <small>(2² + 2²)</small>
+            </div>
+            <div class="construction-item" onclick="setTarget(10)">
+                <span>√10</span> <small>(3² + 1²)</small>
+            </div>
+            <div class="construction-item" onclick="setTarget(13)">
+                <span>√13</span> <small>(3² + 2²)</small>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class IrrationalNumberAR {
+            constructor() {
+                this.canvas = document.getElementById('canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.resizeCanvas();
+                
+                // 坐标系设置
+                this.centerX = this.canvas.width / 2;
+                this.centerY = this.canvas.height * 0.7;
+                this.scale = 60; // 每单位长度的像素数
+                
+                // 状态管理
+                this.currentTool = 'point';
+                this.currentStep = 1;
+                this.maxSteps = 5;
+                this.targetValue = 5; // 默认构造√5
+                this.targetSides = { a: 2, b: 1 }; // 2² + 1² = 5
+                
+                // 构造元素
+                this.points = [];
+                this.lines = [];
+                this.circles = [];
+                this.constructionComplete = false;
+                
+                // 预设点位置
+                this.origin = { x: this.centerX, y: this.centerY };
+                
+                this.setupEventListeners();
+                this.animate();
+                this.updateStepInfo();
+            }
+            
+            resizeCanvas() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight - 120; // 减去头部和工具栏高度
+            }
+            
+            setupEventListeners() {
+                window.addEventListener('resize', () => {
+                    this.resizeCanvas();
+                    this.centerX = this.canvas.width / 2;
+                    this.centerY = this.canvas.height * 0.7;
+                    this.origin = { x: this.centerX, y: this.centerY };
+                });
+                
+                // 画布点击事件
+                this.canvas.addEventListener('click', (e) => this.handleCanvasClick(e));
+                
+                // 工具按钮事件
+                document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
+                    btn.addEventListener('click', (e) => this.setTool(e.target.dataset.tool));
+                });
+                
+                document.getElementById('resetBtn').addEventListener('click', () => this.reset());
+                document.getElementById('nextStepBtn').addEventListener('click', () => this.nextStep());
+            }
+            
+            setTool(tool) {
+                this.currentTool = tool;
+                
+                // 更新按钮状态
+                document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelector(`[data-tool="${tool}"]`).classList.add('active');
+                
+                // 更新显示
+                const toolNames = {
+                    point: '点工具',
+                    line: '直线工具',
+                    compass: '圆规工具'
+                };
+                document.getElementById('currentTool').textContent = toolNames[tool];
+            }
+            
+            handleCanvasClick(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                switch(this.currentTool) {
+                    case 'point':
+                        this.addPoint(x, y);
+                        break;
+                    case 'line':
+                        this.handleLineClick(x, y);
+                        break;
+                    case 'compass':
+                        this.handleCompassClick(x, y);
+                        break;
+                }
+            }
+            
+            addPoint(x, y) {
+                // 根据当前步骤添加特定点
+                if (this.currentStep === 1) {
+                    // 添加原点和第一个点
+                    if (this.points.length === 0) {
+                        this.points.push({
+                            x: this.origin.x,
+                            y: this.origin.y,
+                            label: '(0,0)',
+                            type: 'origin'
+                        });
+                    } else if (this.points.length === 1) {
+                        this.points.push({
+                            x: this.origin.x + this.targetSides.a * this.scale,
+                            y: this.origin.y,
+                            label: `(${this.targetSides.a},0)`,
+                            type: 'horizontal'
+                        });
+                        this.currentStep = 2;
+                        this.updateStepInfo();
+                    }
+                } else if (this.currentStep === 2) {
+                    // 添加垂直点
+                    if (this.points.length === 2) {
+                        this.points.push({
+                            x: this.origin.x + this.targetSides.a * this.scale,
+                            y: this.origin.y - this.targetSides.b * this.scale,
+                            label: `(${this.targetSides.a},${this.targetSides.b})`,
+                            type: 'vertical'
+                        });
+                        this.currentStep = 3;
+                        this.updateStepInfo();
+                    }
+                }
+            }
+            
+            handleLineClick(x, y) {
+                // 自动连线逻辑
+                this.autoDrawLines();
+            }
+            
+            handleCompassClick(x, y) {
+                if (this.currentStep >= 4 && this.points.length >= 3) {
+                    this.drawCompassCircle();
+                }
+            }
+            
+            autoDrawLines() {
+                if (this.points.length >= 2 && this.lines.length === 0) {
+                    // 绘制水平边
+                    this.lines.push({
+                        from: this.points[0],
+                        to: this.points[1],
+                        type: 'horizontal',
+                        label: `长度: ${this.targetSides.a}`
+                    });
+                }
+                
+                if (this.points.length >= 3 && this.lines.length === 1) {
+                    // 绘制垂直边
+                    this.lines.push({
+                        from: this.points[1],
+                        to: this.points[2],
+                        type: 'vertical',
+                        label: `长度: ${this.targetSides.b}`
+                    });
+                    
+                    // 绘制斜边
+                    this.lines.push({
+                        from: this.points[0],
+                        to: this.points[2],
+                        type: 'hypotenuse',
+                        label: `长度: √${this.targetValue} ≈ ${Math.sqrt(this.targetValue).toFixed(3)}`
+                    });
+                    
+                    this.currentStep = 4;
+                    this.updateStepInfo();
+                }
+            }
+            
+            drawCompassCircle() {
+                if (this.circles.length === 0) {
+                    const radius = Math.sqrt(this.targetValue) * this.scale;
+                    this.circles.push({
+                        center: this.points[0],
+                        radius: radius,
+                        type: 'construction'
+                    });
+                    
+                    // 计算与数轴的交点
+                    const intersectionX = this.origin.x + Math.sqrt(this.targetValue) * this.scale;
+                    this.points.push({
+                        x: intersectionX,
+                        y: this.origin.y,
+                        label: `√${this.targetValue}`,
+                        type: 'intersection',
+                        highlight: true
+                    });
+                    
+                    this.currentStep = 5;
+                    this.constructionComplete = true;
+                    this.updateStepInfo();
+                }
+            }
+            
+            nextStep() {
+                switch(this.currentStep) {
+                    case 1:
+                        if (this.points.length < 2) {
+                            this.addPoint(0, 0); // 添加原点
+                            if (this.points.length === 1) {
+                                this.addPoint(0, 0); // 添加第二个点
+                            }
+                        }
+                        break;
+                    case 2:
+                        if (this.points.length < 3) {
+                            this.addPoint(0, 0); // 添加垂直点
+                        }
+                        break;
+                    case 3:
+                        this.autoDrawLines();
+                        break;
+                    case 4:
+                        this.drawCompassCircle();
+                        break;
+                }
+            }
+            
+            updateStepInfo() {
+                const steps = [
+                    `第1步: 在原点(0,0)和点(${this.targetSides.a},0)处各点一个点`,
+                    `第2步: 在点(${this.targetSides.a},${this.targetSides.b})处添加一个点，形成直角三角形`,
+                    `第3步: 连接各点形成直角三角形`,
+                    `第4步: 使用圆规，以原点为圆心，斜边为半径画弧`,
+                    `第5步: 圆弧与数轴的交点即为√${this.targetValue}的位置`
+                ];
+                
+                document.getElementById('stepInfo').textContent = 
+                    this.currentStep <= steps.length ? steps[this.currentStep - 1] : '构造完成！';
+                
+                // 更新计算显示
+                const calc = `√(${this.targetSides.a}² + ${this.targetSides.b}²) = √${this.targetValue} ≈ ${Math.sqrt(this.targetValue).toFixed(3)}`;
+                document.getElementById('calculation').textContent = calc;
+            }
+            
+            reset() {
+                this.points = [];
+                this.lines = [];
+                this.circles = [];
+                this.currentStep = 1;
+                this.constructionComplete = false;
+                this.setTool('point');
+                this.updateStepInfo();
+            }
+            
+            draw() {
+                // 清空画布
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // 绘制数轴
+                this.drawNumberLine();
+                
+                // 绘制网格
+                this.drawGrid();
+                
+                // 绘制构造元素
+                this.drawLines();
+                this.drawCircles();
+                this.drawPoints();
+                
+                // 绘制标签和说明
+                this.drawLabels();
+            }
+            
+            drawNumberLine() {
+                const ctx = this.ctx;
+                
+                // 主数轴
+                ctx.strokeStyle = '#ecf0f1';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(50, this.centerY);
+                ctx.lineTo(this.canvas.width - 50, this.centerY);
+                ctx.stroke();
+                
+                // 刻度和标签
+                ctx.fillStyle = '#ecf0f1';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                
+                for (let i = -5; i <= 8; i++) {
+                    const x = this.centerX + i * this.scale;
+                    if (x >= 50 && x <= this.canvas.width - 50) {
+                        // 刻度线
+                        ctx.beginPath();
+                        ctx.moveTo(x, this.centerY - 10);
+                        ctx.lineTo(x, this.centerY + 10);
+                        ctx.stroke();
+                        
+                        // 数字标签
+                        ctx.fillText(i.toString(), x, this.centerY + 30);
+                    }
+                }
+                
+                // 原点标记
+                ctx.fillStyle = '#e74c3c';
+                ctx.beginPath();
+                ctx.arc(this.centerX, this.centerY, 5, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.fillStyle = '#ecf0f1';
+                ctx.fillText('O', this.centerX, this.centerY - 15);
+            }
+            
+            drawGrid() {
+                const ctx = this.ctx;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                ctx.lineWidth = 1;
+                
+                // 垂直网格线
+                for (let i = -10; i <= 10; i++) {
+                    const x = this.centerX + i * this.scale;
+                    if (x >= 0 && x <= this.canvas.width) {
+                        ctx.beginPath();
+                        ctx.moveTo(x, 0);
+                        ctx.lineTo(x, this.canvas.height);
+                        ctx.stroke();
+                    }
+                }
+                
+                // 水平网格线
+                for (let i = -5; i <= 5; i++) {
+                    const y = this.centerY + i * this.scale;
+                    if (y >= 0 && y <= this.canvas.height) {
+                        ctx.beginPath();
+                        ctx.moveTo(0, y);
+                        ctx.lineTo(this.canvas.width, y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            
+            drawLines() {
+                const ctx = this.ctx;
+                
+                this.lines.forEach(line => {
+                    ctx.strokeStyle = line.type === 'hypotenuse' ? '#e74c3c' : '#3498db';
+                    ctx.lineWidth = line.type === 'hypotenuse' ? 4 : 3;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(line.from.x, line.from.y);
+                    ctx.lineTo(line.to.x, line.to.y);
+                    ctx.stroke();
+                    
+                    // 线段中点标签
+                    if (line.label) {
+                        const midX = (line.from.x + line.to.x) / 2;
+                        const midY = (line.from.y + line.to.y) / 2;
+                        
+                        ctx.fillStyle = line.type === 'hypotenuse' ? '#e74c3c' : '#3498db';
+                        ctx.font = 'bold 12px Arial';
+                        ctx.textAlign = 'center';
+                        
+                        // 背景
+                        const metrics = ctx.measureText(line.label);
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                        ctx.fillRect(midX - metrics.width/2 - 5, midY - 15, metrics.width + 10, 20);
+                        
+                        ctx.fillStyle = line.type === 'hypotenuse' ? '#e74c3c' : '#3498db';
+                        ctx.fillText(line.label, midX, midY - 5);
+                    }
+                });
+            }
+            
+            drawCircles() {
+                const ctx = this.ctx;
+                
+                this.circles.forEach(circle => {
+                    ctx.strokeStyle = '#f39c12';
+                    ctx.lineWidth = 3;
+                    ctx.setLineDash([5, 5]);
+                    
+                    ctx.beginPath();
+                    ctx.arc(circle.center.x, circle.center.y, circle.radius, 0, 2 * Math.PI);
+                    ctx.stroke();
+                    
+                    ctx.setLineDash([]);
+                });
+            }
+            
+            drawPoints() {
+                const ctx = this.ctx;
+                
+                this.points.forEach(point => {
+                    // 点的颜色
+                    let color = '#f1c40f';
+                    if (point.type === 'origin') color = '#e74c3c';
+                    if (point.type === 'intersection') color = '#2ecc71';
+                    if (point.highlight) color = '#e74c3c';
+                    
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    ctx.arc(point.x, point.y, point.highlight ? 8 : 6, 0, 2 * Math.PI);
+                    ctx.fill();
+                    
+                    // 点的边框
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    
+                    // 闪烁效果
+                    if (point.highlight) {
+                        const time = Date.now() / 200;
+                        const alpha = (Math.sin(time) + 1) / 2;
+                        ctx.fillStyle = `rgba(231, 76, 60, ${alpha})`;
+                        ctx.beginPath();
+                        ctx.arc(point.x, point.y, 12, 0, 2 * Math.PI);
+                        ctx.fill();
+                    }
+                    
+                    // 点标签
+                    if (point.label) {
+                        ctx.fillStyle = '#ffffff';
+                        ctx.font = 'bold 14px Arial';
+                        ctx.textAlign = 'center';
+                        
+                        // 背景
+                        const metrics = ctx.measureText(point.label);
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                        ctx.fillRect(point.x - metrics.width/2 - 5, point.y - 30, metrics.width + 10, 18);
+                        
+                        ctx.fillStyle = color;
+                        ctx.fillText(point.label, point.x, point.y - 15);
+                    }
+                });
+            }
+            
+            drawLabels() {
+                // 可以添加额外的标签和说明
+                if (this.constructionComplete) {
+                    const ctx = this.ctx;
+                    ctx.fillStyle = '#2ecc71';
+                    ctx.font = 'bold 20px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`√${this.targetValue} 已成功定位在数轴上!`, this.canvas.width / 2, 50);
+                }
+            }
+            
+            animate() {
+                this.draw();
+                requestAnimationFrame(() => this.animate());
+            }
+        }
+        
+        // 全局函数
+        let demo;
+        
+        function setTarget(value) {
+            const targetConfigs = {
+                2: { a: 1, b: 1 },   // √2 = √(1² + 1²)
+                5: { a: 2, b: 1 },   // √5 = √(2² + 1²)
+                8: { a: 2, b: 2 },   // √8 = √(2² + 2²)
+                10: { a: 3, b: 1 },  // √10 = √(3² + 1²)
+                13: { a: 3, b: 2 }   // √13 = √(3² + 2²)
+            };
+            
+            if (targetConfigs[value]) {
+                demo.targetValue = value;
+                demo.targetSides = targetConfigs[value];
+                document.getElementById('targetDisplay').textContent = `目标: 构造 √${value}`;
+                demo.reset();
+            }
+        }
+        
+        // 初始化
+        window.onload = function() {
+            demo = new IrrationalNumberAR();
+        };
+    </script>
+</body>
+</html>
