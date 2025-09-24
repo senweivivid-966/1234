@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数轴构造师AR - 构造√5 (真实VR场景)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: 
+                radial-gradient(ellipse at 20% 30%, rgba(255, 248, 220, 0.8) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(245, 222, 179, 0.6) 0%, transparent 40%),
+                linear-gradient(135deg, 
+                    #8B4513 0%,
+                    #A0522D 15%,
+                    #CD853F 30%,
+                    #DEB887 45%,
+                    #F5DEB3 60%,
+                    #DEB887 75%,
+                    #CD853F 90%,
+                    #8B4513 100%
+                );
+            position: relative;
+        }
+
+        /* 添加木纹纹理效果 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                repeating-linear-gradient(
+                    90deg,
+                    transparent 0px,
+                    rgba(139, 69, 19, 0.1) 1px,
+                    rgba(139, 69, 19, 0.1) 2px,
+                    transparent 3px,
+                    transparent 8px
+                ),
+                repeating-linear-gradient(
+                    0deg,
+                    transparent 0px,
+                    rgba(160, 82, 45, 0.05) 1px,
+                    rgba(160, 82, 45, 0.05) 2px,
+                    transparent 3px,
+                    transparent 15px
+                );
+            z-index: -2;
+        }
+
+        /* 添加课桌物品阴影效果 */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 20%;
+            left: 10%;
+            width: 80px;
+            height: 120px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+            transform: rotate(-15deg);
+            z-index: -1;
+            box-shadow: 
+                200px 50px 0 rgba(0, 0, 0, 0.08),
+                400px -20px 0 rgba(0, 0, 0, 0.06),
+                -100px 200px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .macbook-container {
+            position: relative;
+            width: 90vw;
+            max-width: 1200px;
+            height: 75vh;
+            max-height: 800px;
+            transform: perspective(1200px) rotateX(8deg) rotateY(-3deg);
+            filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.4));
+        }
+
+        .macbook-frame {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(145deg, #2c2c2c, #1a1a1a);
+            border-radius: 12px;
+            padding: 8px;
+            position: relative;
+            box-shadow: 
+                inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                0 0 0 1px rgba(0, 0, 0, 0.8),
+                0 25px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .macbook-frame::before {
+            content: '';
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 8px;
+            height: 8px;
+            background: radial-gradient(circle, #666, #333);
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .screen {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid #000;
+        }
+
+        .app-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            border-bottom: 2px solid #3498db;
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            font-size: 18px;
+            margin-left: 10px;
+            color: #3498db;
+        }
+
+        .header .subtitle {
+            font-size: 12px;
+            color: #bbb;
+            margin-left: 10px;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            position: relative;
+            background: rgba(30, 60, 114, 0.95);
+            backdrop-filter: blur(15px);
+        }
+
+        .tools-panel {
+            width: 120px;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 15px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border-right: 1px solid rgba(52, 152, 219, 0.3);
+        }
+
+        .tools-title {
+            color: #3498db;
+            font-size: 12px;
+            text-align: center;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .tool-btn {
+            width: 80px;
+            height: 60px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 11px;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            transition: all 0.3s ease;
+            background: rgba(52, 152, 219, 0.2);
+            border: 1px solid rgba(52, 152, 219, 0.3);
+        }
+
+        .tool-btn:hover {
+            background: rgba(52, 152, 219, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .tool-btn.active {
+            background: rgba(255, 165, 0, 0.8);
+            border-color: #ffa500;
+        }
+
+        .construction-area {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: 
+                linear-gradient(rgba(52, 152, 219, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(52, 152, 219, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .number-line-container {
+            width: 600px;
+            height: 300px;
+            position: relative;
+            border: 2px dashed rgba(52, 152, 219, 0.5);
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .number-line {
+            position: absolute;
+            bottom: 150px;
+            left: 50px;
+            width: 500px;
+            height: 2px;
+            background: #3498db;
+            box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+        }
+
+        .tick {
+            position: absolute;
+            width: 2px;
+            height: 20px;
+            background: #3498db;
+            top: -9px;
+        }
+
+        .tick-label {
+            position: absolute;
+            top: -35px;
+            left: -8px;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .construction-point {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ffd700;
+            border: 2px solid #fff;
+            cursor: pointer;
+            z-index: 10;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+        }
+
+        .construction-line {
+            position: absolute;
+            background: #3498db;
+            z-index: 5;
+        }
+
+        .horizontal-line {
+            height: 3px;
+            box-shadow: 0 0 8px rgba(52, 152, 219, 0.6);
+        }
+
+        .vertical-line {
+            width: 3px;
+            box-shadow: 0 0 8px rgba(46, 204, 113, 0.6);
+            background: #2ecc71;
+        }
+
+        .diagonal-line {
+            height: 3px;
+            background: #e74c3c;
+            box-shadow: 0 0 8px rgba(231, 76, 60, 0.6);
+            transform-origin: left center;
+        }
+
+        .construction-arc {
+            position: absolute;
+            border: 3px solid #ff6b6b;
+            border-radius: 50%;
+            background: transparent;
+            box-shadow: 0 0 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .intersection-point {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #e74c3c;
+            border: 2px solid #fff;
+            z-index: 15;
+            animation: pulse 1.5s infinite;
+            box-shadow: 0 0 15px rgba(231, 76, 60, 0.8);
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.7; }
+        }
+
+        .label {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 20;
+            border: 1px solid #3498db;
+        }
+
+        .steps-panel {
+            width: 280px;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 15px;
+            border-left: 1px solid rgba(52, 152, 219, 0.3);
+            backdrop-filter: blur(15px);
+        }
+
+        .steps-title {
+            color: #3498db;
+            font-size: 14px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .step-item {
+            background: rgba(52, 152, 219, 0.1);
+            border: 1px solid rgba(52, 152, 219, 0.3);
+            border-radius: 6px;
+            padding: 8px;
+            margin-bottom: 8px;
+            color: #bbb;
+            font-size: 11px;
+            transition: all 0.3s ease;
+        }
+
+        .step-item.active {
+            background: rgba(255, 165, 0, 0.2);
+            border-color: #ffa500;
+            color: #ffa500;
+        }
+
+        .step-item.completed {
+            background: rgba(46, 204, 113, 0.2);
+            border-color: #2ecc71;
+            color: #2ecc71;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(52, 152, 219, 0.2);
+            border-radius: 3px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 3px;
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 30;
+        }
+
+        .control-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .primary-btn {
+            background: rgba(52, 152, 219, 0.9);
+            color: white;
+            border: 1px solid #3498db;
+        }
+
+        .primary-btn:hover {
+            background: rgba(52, 152, 219, 1);
+            transform: translateY(-2px);
+        }
+
+        .secondary-btn {
+            background: rgba(149, 165, 166, 0.9);
+            color: white;
+            border: 1px solid #95a5a6;
+        }
+
+        .secondary-btn:hover {
+            background: rgba(149, 165, 166, 1);
+            transform: translateY(-2px);
+        }
+
+        .vr-indicator {
+            position: absolute;
+            bottom: 15px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #3498db;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 11px;
+            border: 1px solid rgba(52, 152, 219, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .device-info {
+            position: absolute;
+            bottom: 15px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #95a5a6;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 10px;
+            border: 1px solid rgba(149, 165, 166, 0.3);
+        }
+
+        /* 添加课桌上的物品装饰 */
+        .desk-items {
+            position: fixed;
+            top: 15%;
+            left: 8%;
+            width: 60px;
+            height: 80px;
+            background: linear-gradient(45deg, #4a4a4a, #6a6a6a);
+            border-radius: 3px;
+            transform: rotate(-12deg);
+            z-index: -1;
+            box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .desk-items::before {
+            content: '';
+            position: absolute;
+            top: 120px;
+            left: 200px;
+            width: 100px;
+            height: 8px;
+            background: linear-gradient(90deg, #ff6b35, #f7931e);
+            border-radius: 4px;
+            transform: rotate(25deg);
+            box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .desk-items::after {
+            content: '';
+            position: absolute;
+            top: 80px;
+            left: 350px;
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle, #ff69b4, #ff1493);
+            border-radius: 50%;
+            box-shadow: 1px 1px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .macbook-container {
+                width: 95vw;
+                height: 70vh;
+            }
+            
+            .steps-panel {
+                width: 240px;
+            }
+            
+            .number-line-container {
+                width: 500px;
+                height: 250px;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .macbook-container {
+                transform: perspective(1000px) rotateX(5deg) rotateY(-2deg);
+            }
+            
+            .tools-panel {
+                width: 100px;
+            }
+            
+            .steps-panel {
+                width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="desk-items"></div>
+    
+    <div class="macbook-container">
+        <div class="macbook-frame">
+            <div class="screen">
+                <div class="app-container">
+                    <div class="header">
+                        <span style="color: #ffa500;">⚠️</span>
+                        <h1>数轴构造师AR - 构造√5</h1>
+                        <div class="subtitle">应用与拓展 - 无理数的几何构造</div>
+                    </div>
+
+                    <div class="main-content">
+                        <div class="tools-panel">
+                            <div class="tools-title">
+                                <span>🛠️</span> 构造工具
+                            </div>
+                            <button class="tool-btn" id="pointTool">
+                                <span style="font-size: 16px;">●</span>
+                                <span>点工具</span>
+                            </button>
+                            <button class="tool-btn" id="lineTool">
+                                <span style="font-size: 16px;">📏</span>
+                                <span>线段工具</span>
+                            </button>
+                            <button class="tool-btn" id="compassTool">
+                                <span style="font-size: 16px;">📐</span>
+                                <span>圆规工具</span>
+                            </button>
+                        </div>
+
+                        <div class="construction-area">
+                            <div class="number-line-container" id="constructionArea">
+                                <div class="number-line" id="numberLine"></div>
+                            </div>
+                        </div>
+
+                        <div class="steps-panel">
+                            <div class="steps-title">
+                                <span>📋</span> 构造步骤
+                            </div>
+                            <div class="step-item" id="step1">
+                                <strong>步骤1:</strong> 在原点(0)和刻度2处放置点
+                            </div>
+                            <div class="step-item" id="step2">
+                                <strong>步骤2:</strong> 连接两点构造水平线段
+                            </div>
+                            <div class="step-item" id="step3">
+                                <strong>步骤3:</strong> 在刻度2上方构造垂直线段
+                            </div>
+                            <div class="step-item" id="step4">
+                                <strong>步骤4:</strong> 连接原点和上方点构造斜边
+                            </div>
+                            <div class="step-item" id="step5">
+                                <strong>步骤5:</strong> 以原点为圆心画弧找到√5
+                            </div>
+                            
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="progressFill"></div>
+                            </div>
+                            
+                            <div style="margin-top: 15px; padding: 10px; background: rgba(46, 204, 113, 0.1); border: 1px solid rgba(46, 204, 113, 0.3); border-radius: 6px;">
+                                <div style="color: #2ecc71; font-size: 12px; font-weight: bold;">计算结果:</div>
+                                <div style="color: #fff; font-size: 11px; margin-top: 5px;" id="calculationResult">
+                                    c = √(2² + 1²) = √5 ≈ 2.236
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="controls">
+                        <div class="vr-indicator">
+                            🥽 VR课堂：选择工具，在原点(0)和刻度2处放置点
+                        </div>
+                        <button class="control-btn primary-btn" id="nextStepBtn">➡️ 下一步</button>
+                        <button class="control-btn primary-btn" id="autoConstructBtn">🎬 自动构造</button>
+                        <button class="control-btn secondary-btn" id="resetBtn">🔄 重置</button>
+                    </div>
+
+                    <div class="device-info">
+                        🍎 MacBook Pro | 🏫 真实课堂环境
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class NumberLineConstructor {
+            constructor() {
+                this.currentStep = 0;
+                this.currentTool = null;
+                this.points = [];
+                this.lines = [];
+                this.isAutoConstructing = false;
+                
+                this.init();
+            }
+
+            init() {
+                this.setupNumberLine();
+                this.bindEvents();
+                this.updateStepDisplay();
+            }
+
+            setupNumberLine() {
+                const numberLine = document.getElementById('numberLine');
+                
+                // 创建刻度
+                for (let i = 0; i <= 5; i++) {
+                    const tick = document.createElement('div');
+                    tick.className = 'tick';
+                    tick.style.left = `${i * 100}px`;
+                    
+                    const label = document.createElement('div');
+                    label.className = 'tick-label';
+                    label.textContent = i;
+                    tick.appendChild(label);
+                    
+                    numberLine.appendChild(tick);
+                }
+            }
+
+            bindEvents() {
+                // 工具选择
+                document.getElementById('pointTool').addEventListener('click', () => this.selectTool('point'));
+                document.getElementById('lineTool').addEventListener('click', () => this.selectTool('line'));
+                document.getElementById('compassTool').addEventListener('click', () => this.selectTool('compass'));
+                
+                // 控制按钮
+                document.getElementById('nextStepBtn').addEventListener('click', () => this.nextStep());
+                document.getElementById('autoConstructBtn').addEventListener('click', () => this.autoConstruct());
+                document.getElementById('resetBtn').addEventListener('click', () => this.reset());
+                
+                // 构造区域点击
+                document.getElementById('constructionArea').addEventListener('click', (e) => this.handleAreaClick(e));
+            }
+
+            selectTool(tool) {
+                this.currentTool = tool;
+                
+                // 更新工具按钮状态
+                document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+                document.getElementById(tool + 'Tool').classList.add('active');
+                
+                // 更新提示
+                this.updateVRIndicator();
+            }
+
+            handleAreaClick(e) {
+                if (!this.currentTool || this.isAutoConstructing) return;
+                
+                const rect = e.currentTarget.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                if (this.currentTool === 'point') {
+                    this.addPoint(x, y);
+                }
+            }
+
+            addPoint(x, y) {
+                const point = document.createElement('div');
+                point.className = 'construction-point';
+                point.style.left = `${x - 4}px`;
+                point.style.top = `${y - 4}px`;
+                
+                document.getElementById('constructionArea').appendChild(point);
+                this.points.push({x, y, element: point});
+                
+                this.checkStepCompletion();
+            }
+
+            nextStep() {
+                if (this.currentStep < 5) {
+                    this.performStep(this.currentStep + 1);
+                }
+            }
+
+            async autoConstruct() {
+                if (this.isAutoConstructing) return;
+                
+                this.isAutoConstructing = true;
+                this.reset();
+                
+                for (let step = 1; step <= 5; step++) {
+                    await this.performStepWithDelay(step, 1000);
+                }
+                
+                this.isAutoConstructing = false;
+            }
+
+            async performStepWithDelay(step, delay) {
+                return new Promise(resolve => {
+                    setTimeout(() => {
+                        this.performStep(step);
+                        resolve();
+                    }, delay);
+                });
+            }
+
+            performStep(step) {
+                const constructionArea = document.getElementById('constructionArea');
+                
+                switch(step) {
+                    case 1:
+                        // 在原点和刻度2处放置点
+                        this.addConstructionPoint(50, 150, '原点(0)');
+                        this.addConstructionPoint(250, 150, '点(2)');
+                        break;
+                        
+                    case 2:
+                        // 连接两点构造水平线段
+                        this.addConstructionLine(50, 150, 250, 150, 'horizontal', 'a = 2');
+                        break;
+                        
+                    case 3:
+                        // 构造垂直线段
+                        this.addConstructionPoint(250, 50, '点(2,1)');
+                        this.addConstructionLine(250, 150, 250, 50, 'vertical', 'b = 1');
+                        break;
+                        
+                    case 4:
+                        // 构造斜边
+                        this.addConstructionLine(50, 150, 250, 50, 'diagonal', 'c = √(2² + 1²) = √5 ≈ 2.236');
+                        break;
+                        
+                    case 5:
+                        // 画弧找交点
+                        this.addConstructionArc(50, 150, 223.6);
+                        this.addIntersectionPoint(273.6, 150, 'P(√5) ≈ 2.236');
+                        break;
+                }
+                
+                this.currentStep = step;
+                this.updateStepDisplay();
+                this.updateProgress();
+            }
+
+            addConstructionPoint(x, y, label) {
+                const point = document.createElement('div');
+                point.className = 'construction-point';
+                point.style.left = `${x - 4}px`;
+                point.style.top = `${y - 4}px`;
+                
+                if (label) {
+                    const labelEl = document.createElement('div');
+                    labelEl.className = 'label';
+                    labelEl.textContent = label;
+                    labelEl.style.left = `${x + 10}px`;
+                    labelEl.style.top = `${y - 25}px`;
+                    document.getElementById('constructionArea').appendChild(labelEl);
+                }
+                
+                document.getElementById('constructionArea').appendChild(point);
+            }
+
+            addConstructionLine(x1, y1, x2, y2, type, label) {
+                const line = document.createElement('div');
+                line.className = `construction-line ${type}-line`;
+                
+                if (type === 'horizontal') {
+                    line.style.left = `${Math.min(x1, x2)}px`;
+                    line.style.top = `${y1 - 1.5}px`;
+                    line.style.width = `${Math.abs(x2 - x1)}px`;
+                } else if (type === 'vertical') {
+                    line.style.left = `${x1 - 1.5}px`;
+                    line.style.top = `${Math.min(y1, y2)}px`;
+                    line.style.height = `${Math.abs(y2 - y1)}px`;
+                } else if (type === 'diagonal') {
+                    const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+                    const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+                    
+                    line.style.left = `${x1}px`;
+                    line.style.top = `${y1 - 1.5}px`;
+                    line.style.width = `${length}px`;
+                    line.style.transform = `rotate(${angle}deg)`;
+                }
+                
+                if (label) {
+                    const labelEl = document.createElement('div');
+                    labelEl.className = 'label';
+                    labelEl.textContent = label;
+                    labelEl.style.left = `${(x1 + x2) / 2 + 10}px`;
+                    labelEl.style.top = `${(y1 + y2) / 2 - 25}px`;
+                    document.getElementById('constructionArea').appendChild(labelEl);
+                }
+                
+                document.getElementById('constructionArea').appendChild(line);
+            }
+
+            addConstructionArc(centerX, centerY, radius) {
+                const arc = document.createElement('div');
+                arc.className = 'construction-arc';
+                arc.style.left = `${centerX - radius}px`;
+                arc.style.top = `${centerY - radius}px`;
+                arc.style.width = `${radius * 2}px`;
+                arc.style.height = `${radius * 2}px`;
+                
+                document.getElementById('constructionArea').appendChild(arc);
+            }
+
+            addIntersectionPoint(x, y, label) {
+                const point = document.createElement('div');
+                point.className = 'intersection-point';
+                point.style.left = `${x - 6}px`;
+                point.style.top = `${y - 6}px`;
+                
+                if (label) {
+                    const labelEl = document.createElement('div');
+                    labelEl.className = 'label';
+                    labelEl.textContent = label;
+                    labelEl.style.left = `${x + 15}px`;
+                    labelEl.style.top = `${y - 25}px`;
+                    labelEl.style.background = 'rgba(231, 76, 60, 0.9)';
+                    labelEl.style.borderColor = '#e74c3c';
+                    document.getElementById('constructionArea').appendChild(labelEl);
+                }
+                
+                document.getElementById('constructionArea').appendChild(point);
+            }
+
+            updateStepDisplay() {
+                for (let i = 1; i <= 5; i++) {
+                    const stepEl = document.getElementById(`step${i}`);
+                    stepEl.classList.remove('active', 'completed');
+                    
+                    if (i < this.currentStep) {
+                        stepEl.classList.add('completed');
+                    } else if (i === this.currentStep) {
+                        stepEl.classList.add('active');
+                    }
+                }
+            }
+
+            updateProgress() {
+                const progress = (this.currentStep / 5) * 100;
+                document.getElementById('progressFill').style.width = `${progress}%`;
+            }
+
+            updateVRIndicator() {
+                const indicator = document.querySelector('.vr-indicator');
+                const toolNames = {
+                    'point': '点工具',
+                    'line': '线段工具',
+                    'compass': '圆规工具'
+                };
+                
+                if (this.currentTool) {
+                    indicator.textContent = `🥽 VR课堂：已选择${toolNames[this.currentTool]}，在原点(0)和刻度2处放置点`;
+                }
+            }
+
+            checkStepCompletion() {
+                // 检查当前步骤是否完成的逻辑
+                if (this.points.length >= 2 && this.currentStep === 0) {
+                    this.currentStep = 1;
+                    this.updateStepDisplay();
+                    this.updateProgress();
+                }
+            }
+
+            reset() {
+                // 清除所有构造元素
+                const constructionArea = document.getElementById('constructionArea');
+                const elementsToRemove = constructionArea.querySelectorAll('.construction-point, .construction-line, .construction-arc, .intersection-point, .label');
+                elementsToRemove.forEach(el => el.remove());
+                
+                // 重置状态
+                this.currentStep = 0;
+                this.points = [];
+                this.lines = [];
+                this.currentTool = null;
+                
+                // 重置UI
+                document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+                this.updateStepDisplay();
+                this.updateProgress();
+                
+                // 重置提示
+                document.querySelector('.vr-indicator').textContent = '🥽 VR课堂：选择工具，在原点(0)和刻度2处放置点';
+            }
+        }
+
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', () => {
+            new NumberLineConstructor();
+        });
+    </script>
+</body>
+</html>
