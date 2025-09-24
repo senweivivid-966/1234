@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数轴构造师AR - 构造√5 (精确复刻版)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* 精确复刻参考图片的教室背景 */
+        .exact-classroom-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, 
+                #f5f5f5 0%,     /* 天花板 */
+                #efefef 8%,     /* 天花板下沿 */
+                #e8e8e8 15%,    /* 墙面上部 */
+                #e0e0e0 85%,    /* 墙面下部 */
+                #d8d8d8 100%    /* 地面 */
+            );
+            z-index: -30;
+        }
+
+        /* 左侧窗户区域 - 精确复刻 */
+        .left-window-area {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 15%;
+            height: 100%;
+            background: linear-gradient(180deg, 
+                rgba(255, 255, 255, 0.95) 0%,
+                rgba(248, 248, 248, 0.9) 20%,
+                rgba(240, 240, 240, 0.85) 80%,
+                rgba(235, 235, 235, 0.9) 100%
+            );
+            z-index: -29;
+            filter: blur(3px);
+            opacity: 0.8;
+        }
+
+        /* 窗户框架 */
+        .window-frame {
+            position: fixed;
+            top: 12%;
+            left: 2%;
+            width: 11%;
+            height: 60%;
+            border: 4px solid #8B4513;
+            background: rgba(255, 255, 255, 0.9);
+            z-index: -28;
+            filter: blur(2.5px);
+            opacity: 0.7;
+        }
+
+        .window-frame::before {
+            content: '';
+            position: absolute;
+            top: 48%;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: #8B4513;
+        }
+
+        .window-frame::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 48%;
+            width: 4px;
+            height: 100%;
+            background: #8B4513;
+        }
+
+        /* 后方绿色黑板 - 精确复刻颜色和位置 */
+        .exact-blackboard {
+            position: fixed;
+            top: 8%;
+            left: 20%;
+            width: 65%;
+            height: 35%;
+            background: linear-gradient(145deg, 
+                #2d5a2d 0%,     /* 深绿色 */
+                #1e4a1e 50%,    /* 中绿色 */
+                #0f3a0f 100%    /* 最深绿色 */
+            );
+            border-radius: 6px;
+            border: 8px solid #8B4513;  /* 木质边框 */
+            z-index: -27;
+            filter: blur(2px);
+            opacity: 0.85;
+            box-shadow: 
+                0 12px 35px rgba(0, 0, 0, 0.3),
+                inset 0 2px 4px rgba(255, 255, 255, 0.1);
+        }
+
+        /* 黑板边框细节 */
+        .exact-blackboard::before {
+            content: '';
+            position: absolute;
+            top: 6%;
+            left: 3%;
+            width: 94%;
+            height: 88%;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 3px;
+        }
+
+        /* 黑板下方的粉笔槽 */
+        .chalk-tray {
+            position: fixed;
+            top: 43.5%;
+            left: 18%;
+            width: 69%;
+            height: 3%;
+            background: linear-gradient(145deg, #CD853F, #A0522D);
+            border-radius: 4px;
+            z-index: -26;
+            filter: blur(2px);
+            opacity: 0.8;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        }
+
+        /* 左侧讲台 - 精确复刻橙棕色 */
+        .exact-podium {
+            position: fixed;
+            bottom: 25%;
+            left: 8%;
+            width: 25%;
+            height: 28%;
+            background: linear-gradient(145deg, 
+                #D2691E 0%,     /* 橙棕色顶部 */
+                #CD853F 25%,    /* 中间色调 */
+                #A0522D 75%,    /* 深棕色 */
+                #8B4513 100%    /* 最深棕色 */
+            );
+            border-radius: 8px 8px 0 0;
+            z-index: -25;
+            filter: blur(1.8px);
+            opacity: 0.9;
+            box-shadow: 
+                0 15px 40px rgba(0, 0, 0, 0.3),
+                inset 0 3px 6px rgba(255, 255, 255, 0.2);
+        }
+
+        /* 讲台顶部台面 */
+        .exact-podium::before {
+            content: '';
+            position: absolute;
+            top: -15px;
+            left: -4%;
+            width: 108%;
+            height: 20px;
+            background: linear-gradient(145deg, #DEB887, #CD853F, #A0522D);
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
+        }
+
+        /* 讲台上的黑色物品（投影仪或电脑） */
+        .podium-device {
+            position: fixed;
+            bottom: 45%;
+            left: 15%;
+            width: 8%;
+            height: 6%;
+            background: linear-gradient(145deg, #2c2c2c, #1a1a1a, #000);
+            border-radius: 4px;
+            z-index: -24;
+            filter: blur(2.5px);
+            opacity: 0.7;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        /* 右侧课桌椅区域 - 精确复刻木色 */
+        .right-desk-area {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            width: 40%;
+            height: 45%;
+            z-index: -23;
+            filter: blur(3px);
+            opacity: 0.6;
+        }
+
+        /* 背景课桌 - 精确复刻木纹色彩 */
+        .bg-desk-exact {
+            position: absolute;
+            background: linear-gradient(145deg, 
+                #DEB887 0%,     /* 浅木色 */
+                #D2B48C 30%,    /* 中木色 */
+                #BC9A6A 70%,    /* 深木色 */
+                #A0522D 100%    /* 最深木色 */
+            );
+            border-radius: 8px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+        }
+
+        .bg-desk-exact:nth-child(1) {
+            top: 15%;
+            right: 25%;
+            width: 120px;
+            height: 80px;
+            transform: rotate(-1deg);
+        }
+
+        .bg-desk-exact:nth-child(2) {
+            top: 45%;
+            right: 8%;
+            width: 110px;
+            height: 75px;
+            transform: rotate(2deg);
+        }
+
+        .bg-desk-exact:nth-child(3) {
+            top: 65%;
+            right: 30%;
+            width: 115px;
+            height: 78px;
+            transform: rotate(-2deg);
+        }
+
+        /* 背景椅子 - 深棕色 */
+        .bg-chair-exact {
+            position: absolute;
+            background: linear-gradient(145deg, #8B4513, #654321, #4A2C17);
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        }
+
+        .bg-chair-exact:nth-child(4) {
+            top: 5%;
+            right: 35%;
+            width: 45px;
+            height: 55px;
+            transform: rotate(-3deg);
+        }
+
+        .bg-chair-exact:nth-child(5) {
+            top: 35%;
+            right: 18%;
+            width: 42px;
+            height: 52px;
+            transform: rotate(2deg);
+        }
+
+        /* 前景课桌表面 - 精确复刻浅木色 */
+        .exact-desk-surface {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 45%;
+            background: linear-gradient(135deg, 
+                #F5DEB3 0%,     /* 最浅木色 */
+                #DEB887 20%,    /* 浅木色 */
+                #D2B48C 40%,    /* 中浅木色 */
+                #CD853F 60%,    /* 中木色 */
+                #D2B48C 80%,    /* 中浅木色 */
+                #DEB887 100%    /* 浅木色 */
+            );
+            z-index: -22;
+        }
+
+        /* 课桌木纹纹理 - 更细腻的纹理 */
+        .exact-desk-surface::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                /* 主要木纹线条 */
+                repeating-linear-gradient(
+                    90deg,
+                    transparent 0px,
+                    rgba(139, 69, 19, 0.06) 1px,
+                    rgba(160, 82, 45, 0.04) 2px,
+                    transparent 3px,
+                    transparent 18px
+                ),
+                /* 细节纹理 */
+                repeating-linear-gradient(
+                    0deg,
+                    transparent 0px,
+                    rgba(205, 133, 63, 0.03) 1px,
+                    transparent 2px,
+                    transparent 15px
+                );
+        }
+
+        /* 课桌边缘阴影 */
+        .exact-desk-edge {
+            position: fixed;
+            bottom: 42%;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(to bottom, 
+                rgba(139, 69, 19, 0.3) 0%, 
+                rgba(139, 69, 19, 0.15) 40%,
+                rgba(139, 69, 19, 0.05) 80%,
+                transparent 100%
+            );
+            z-index: -21;
+        }
+
+        /* 左下角的白色纸张 - 精确复刻 */
+        .white-paper {
+            position: fixed;
+            bottom: 18%;
+            left: 8%;
+            width: 12%;
+            height: 16%;
+            background: linear-gradient(145deg, #ffffff, #f8f8f8, #f0f0f0);
+            border-radius: 4px;
+            transform: rotate(-8deg);
+            z-index: -20;
+            box-shadow: 
+                0 8px 25px rgba(0, 0, 0, 0.15),
+                inset 0 1px 3px rgba(255, 255, 255, 0.8);
+        }
+
+        .white-paper::before {
+            content: '';
+            position: absolute;
+            top: 15%;
+            left: 8%;
+            right: 8%;
+            bottom: 15%;
+            background: repeating-linear-gradient(
+                transparent 0px,
+                transparent 18px,
+                rgba(52, 152, 219, 0.1) 19px,
+                rgba(52, 152, 219, 0.1) 20px
+            );
+        }
+
+        /* 平板设备容器 - 精确复刻尺寸和角度 */
+        .exact-tablet-container {
+            position: relative;
+            width: 75vw;
+            max-width: 900px;
+            height: 60vh;
+            max-height: 600px;
+            transform: perspective(1200px) rotateX(8deg) rotateY(-3deg);
+            filter: drop-shadow(0 30px 60px rgba(0, 0, 0, 0.4));
+            z-index: 10;
+        }
+
+        .exact-tablet-frame {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(145deg, #2c2c2c, #1a1a1a, #0d0d0d);
+            border-radius: 20px;
+            padding: 12px;
+            position: relative;
+            box-shadow: 
+                inset 0 2px 4px rgba(255, 255, 255, 0.1),
+                inset 0 -1px 2px rgba(0, 0, 0, 0.5),
+                0 0 0 2px rgba(0, 0, 0, 0.8),
+                0 35px 70px rgba(0, 0, 0, 0.5);
+        }
+
+        /* 平板屏幕反光效果 - 精确复刻 */
+        .exact-tablet-frame::before {
+            content: '';
+            position: absolute;
+            top: 18px;
+            left: 18px;
+            right: 18px;
+            height: 35%;
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.12) 0%, 
+                rgba(255, 255, 255, 0.06) 50%, 
+                transparent 100%
+            );
+            border-radius: 8px;
+            pointer-events: none;
+        }
+
+        .exact-tablet-screen {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1e3c72, #2a5298, #1e3c72);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #000;
+        }
+
+        .exact-app-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .exact-header {
+            background: rgba(0, 0, 0, 0.92);
+            color: white;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            border-bottom: 2px solid #3498db;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .exact-header h1 {
+            font-size: 18px;
+            margin-left: 10px;
+            color: #3498db;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .exact-header .subtitle {
+            font-size: 12px;
+            color: #bbb;
+            margin-left: 10px;
+        }
+
+        .exact-main-content {
+            flex: 1;
+            display: flex;
+            position: relative;
+            background: rgba(30, 60, 114, 0.96);
+            backdrop-filter: blur(20px);
+        }
+
+        .exact-tools-panel {
+            width: 115px;
+            background: rgba(0, 0, 0, 0.92);
+            padding: 16px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border-right: 1px solid rgba(52, 152, 219, 0.4);
+            backdrop-filter: blur(15px);
+        }
+
+        .exact-tools-title {
+            color: #3498db;
+            font-size: 12px;
+            text-align: center;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .exact-tool-btn {
+            width: 80px;
+            height: 60px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 11px;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            transition: all 0.3s ease;
+            background: rgba(52, 152, 219, 0.25);
+            border: 1px solid rgba(52, 152, 219, 0.4);
+            box-shadow: 
+                0 2px 8px rgba(0, 0, 0, 0.2),
+                inset 0 1px 2px rgba(255, 255, 255, 0.1);
+        }
+
+        .exact-tool-btn:hover {
+            background: rgba(52, 152, 219, 0.45);
+            transform: translateY(-2px);
+            box-shadow: 
+                0 4px 12px rgba(0, 0, 0, 0.3),
+                inset 0 1px 2px rgba(255, 255, 255, 0.2);
+        }
+
+        .exact-tool-btn.active {
+            background: rgba(255, 165, 0, 0.85);
+            border-color: #ffa500;
+            box-shadow: 
+                0 4px 15px rgba(255, 165, 0, 0.4),
+                inset 0 1px 2px rgba(255, 255, 255, 0.3);
+        }
+
+        .exact-construction-area {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: 
+                linear-gradient(rgba(52, 152, 219, 0.12) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(52, 152, 219, 0.12) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .exact-number-line-container {
+            width: 580px;
+            height: 300px;
+            position: relative;
+            border: 2px dashed rgba(52, 152, 219, 0.6);
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+            box-shadow: 
+                inset 0 2px 10px rgba(0, 0, 0, 0.2),
+                0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .exact-number-line {
+            position: absolute;
+            bottom: 150px;
+            left: 50px;
+            width: 480px;
+            height: 3px;
+            background: linear-gradient(90deg, #3498db, #2ecc71, #3498db);
+            box-shadow: 
+                0 0 15px rgba(52, 152, 219, 0.6),
+                0 2px 4px rgba(0, 0, 0, 0.3);
+            border-radius: 2px;
+        }
+
+        .exact-tick {
+            position: absolute;
+            width: 3px;
+            height: 22px;
+            background: linear-gradient(180deg, #3498db, #2980b9);
+            top: -9px;
+            border-radius: 2px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .exact-tick-label {
+            position: absolute;
+            top: -38px;
+            left: -8px;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            text-shadow: 
+                0 1px 3px rgba(0, 0, 0, 0.8),
+                0 0 10px rgba(52, 152, 219, 0.5);
+        }
+
+        .exact-construction-point {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #ffd700, #ffed4e);
+            border: 2px solid #fff;
+            cursor: pointer;
+            z-index: 10;
+            box-shadow: 
+                0 0 15px rgba(255, 215, 0, 0.8),
+                0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .exact-construction-line {
+            position: absolute;
+            z-index: 5;
+        }
+
+        .exact-horizontal-line {
+            height: 4px;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            box-shadow: 
+                0 0 12px rgba(52, 152, 219, 0.6),
+                0 2px 4px rgba(0, 0, 0, 0.3);
+            border-radius: 2px;
+        }
+
+        .exact-vertical-line {
+            width: 4px;
+            background: linear-gradient(180deg, #2ecc71, #27ae60);
+            box-shadow: 
+                0 0 12px rgba(46, 204, 113, 0.6),
+                0 2px 4px rgba(0, 0, 0, 0.3);
+            border-radius: 2px;
+        }
+
+        .exact-diagonal-line {
+            height: 4px;
+            background: linear-gradient(90deg, #e74c3c, #c0392b);
+            box-shadow: 
+                0 0 12px rgba(231, 76, 60, 0.6),
+                0 2px 4px rgba(0, 0, 0, 0.3);
+            transform-origin: left center;
+            border-radius: 2px;
+        }
+
+        .exact-construction-arc {
+            position: absolute;
+            border: 4px solid #ff6b6b;
+            border-radius: 50%;
+            background: transparent;
+            box-shadow: 
+                0 0 20px rgba(255, 107, 107, 0.5),
+                inset 0 0 20px rgba(255, 107, 107, 0.1);
+        }
+
+        .exact-intersection-point {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #e74c3c, #c0392b);
+            border: 3px solid #fff;
+            z-index: 15;
+            animation: exactPulse 1.5s infinite;
+            box-shadow: 
+                0 0 20px rgba(231, 76, 60, 0.8),
+                0 4px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        @keyframes exactPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.4); opacity: 0.7; }
+        }
+
+        .exact-label {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.92);
+            color: white;
+            padding: 5px 8px;
+            border-radius: 5px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 20;
+            border: 1px solid #3498db;
+            backdrop-filter: blur(10px);
+            box-shadow: 
+                0 4px 12px rgba(0, 0, 0, 0.4),
+                inset 0 1px 2px rgba(255, 255, 255, 0.1);
+        }
+
+        .exact-steps-panel {
+            width: 270px;
+            background: rgba(0, 0, 0, 0.92);
+            padding: 16px;
+            border-left: 1px solid rgba(52, 152, 219, 0.4);
+            backdrop-filter: blur(20px);
+        }
+
+        .exact-steps-title {
+            color: #3498db;
+            font-size: 14px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .exact-step-item {
+            background: rgba(52, 152, 219, 0.15);
+            border: 1px solid rgba(52, 152, 219, 0.4);
+            border-radius: 6px;
+            padding: 8px;
+            margin-bottom: 8px;
+            color: #bbb;
+            font-size: 11px;
+            transition: all 0.3s ease;
+            box-shadow: 
+                0 2px 6px rgba(0, 0, 0, 0.2),
+                inset 0 1px 2px rgba(255, 255, 255, 0.05);
+        }
+
+        .exact-step-item.active {
+            background: rgba(255, 165, 0, 0.25);
+            border-color: #ffa500;
+            color: #ffa500;
+            box-shadow: 
+                0 4px 12px rgba(255, 165, 0, 0.3),
+                inset 0 1px 2px rgba(255, 255, 255, 0.1);
+        }
+
+        .exact-step-item.completed {
+            background: rgba(46, 204, 113, 0.25);
+            border-color: #2ecc71;
+            color: #2ecc71;
+            box-shadow: 
+                0 4px 12px rgba(46, 204, 113, 0.3),
+                inset 0 1px 2px rgba(255, 255, 255, 0.1);
+        }
+
+        .exact-progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(52, 152, 219, 0.25);
+            border-radius: 3px;
+            margin: 16px 0;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .exact-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2ecc71, #f39c12);
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 3px;
+            box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+        }
+
+        .exact-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 30;
+        }
+
+        .exact-control-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .exact-primary-btn {
+            background: rgba(52, 152, 219, 0.9);
+            color: white;
+            border: 1px solid #3498db;
+        }
+
+        .exact-primary-btn:hover {
+            background: rgba(52, 152, 219, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(52, 152, 219, 0.4);
+        }
+
+        .exact-secondary-btn {
+            background: rgba(149, 165, 166, 0.9);
+            color: white;
+            border: 1px solid #95a5a6;
+        }
+
+        .exact-secondary-btn:hover {
+            background: rgba(149, 165, 166, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(149, 165, 166, 0.4);
+        }
+
+        .exact-device-info {
+            position: absolute;
+            bottom: 16px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            color: #95a5a6;
+            padding: 5px 10px;
+            border-radius: 12px;
+            font-size: 10px;
+            border: 1px solid rgba(149, 165, 166, 0.4);
+            backdrop-filter: blur(10px);
+        }
+
+        .exact-vr-indicator {
+            position: absolute;
+            bottom: 16px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            color: #3498db;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 11px;
+            border: 1px solid rgba(52, 152, 219, 0.4);
+            backdrop-filter: blur(15px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        /* 环境光照效果 - 精确复刻自然光线 */
+        .exact-ambient-light {
+            position: fixed;
+            top: -5%;
+            right: -2%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(ellipse at center, 
+                rgba(255, 248, 220, 0.2) 0%, 
+                rgba(255, 248, 220, 0.12) 35%, 
+                rgba(255, 248, 220, 0.04) 60%,
+                transparent 80%
+            );
+            border-radius: 50%;
+            z-index: -19;
+            animation: exactLightShift 10s ease-in-out infinite;
+        }
+
+        @keyframes exactLightShift {
+            0%, 100% { 
+                transform: translate(0, 0) scale(1); 
+                opacity: 0.2; 
+            }
+            50% { 
+                transform: translate(-15px, 10px) scale(1.1); 
+                opacity: 0.3; 
+            }
+        }
+
+        /* 右下角水印 - 精确复刻 */
+        .exact-watermark {
+            position: fixed;
+            bottom: 3%;
+            right: 3%;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 5;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .exact-tablet-container {
+                width: 80vw;
+                height: 55vh;
+            }
+            
+            .exact-steps-panel {
+                width: 240px;
+            }
+            
+            .exact-number-line-container {
+                width: 500px;
+                height: 260px;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .exact-tablet-container {
+                transform: perspective(1000px) rotateX(6deg) rotateY(-2deg);
+            }
+            
+            .exact-tools-panel {
+                width: 100px;
+            }
+            
+            .exact-steps-panel {
+                width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 精确复刻的教室背景 -->
+    <div class="exact-classroom-background"></div>
+    <div class="left-window-area"></div>
+    <div class="window-frame"></div>
+    <div class="exact-blackboard"></div>
+    <div class="chalk-tray"></div>
+    <div class="exact-podium"></div>
+    <div class="podium-device"></div>
+    
+    <!-- 右侧课桌椅区域 -->
+    <div class="right-desk-area">
+        <div class="bg-desk-exact"></div>
+        <div class="bg-desk-exact"></div>
+        <div class="bg-desk-exact"></div>
+        <div class="bg-chair-exact"></div>
+        <div class="bg-chair-exact"></div>
+    </div>
+    
+    <!-- 前景课桌 -->
+    <div class="exact-desk-surface"></div>
+    <div class="exact-desk-edge"></div>
+    <div class="white-paper"></div>
+    
+    <!-- 环境光照 -->
+    <div class="exact-ambient-light"></div>
+    
+    <!-- 右下角水印 -->
+    <div class="exact-watermark">豆包AI生成</div>
+    
+    <div class="exact-tablet-container">
+        <div class="exact-tablet-frame">
+            <div class="exact-tablet-screen">
+                <div class="exact-app-container">
+                    <div class="exact-header">
+                        <span style="color: #ffa500;">⚠️</span>
+                        <h1>数轴构造师AR - 构造√5</h1>
+                        <div class="subtitle">应用与拓展 - 无理数的几何构造</div>
+                    </div>
+
+                    <div class="exact-main-content">
+                        <div class="exact-tools-panel">
+                            <div class="exact-tools-title">
+                                <span>🛠️</span> 构造工具
+                            </div>
+                            <button class="exact-tool-btn" id="exactPointTool">
+                                <span style="font-size: 16px;">●</span>
+                                <span>点工具</span>
+                            </button>
+                            <button class="exact-tool-btn" id="exactLineTool">
+                                <span style="font-size: 16px;">📏</span>
+                                <span>线段工具</span>
+                            </button>
+                            <button class="exact-tool-btn" id="exactCompassTool">
+                                <span style="font-size: 16px;">📐</span>
+                                <span>圆规工具</span>
+                            </button>
+                        </div>
+
+                        <div class="exact-construction-area">
+                            <div class="exact-number-line-container" id="exactConstructionArea">
+                                <div class="exact-number-line" id="exactNumberLine"></div>
+                            </div>
+                        </div>
+
+                        <div class="exact-steps-panel">
+                            <div class="exact-steps-title">
+                                <span>📋</span> 构造步骤
+                            </div>
+                            <div class="exact-step-item" id="exactStep1">
+                                <strong>步骤1:</strong> 在原点(0)和刻度2处放置点
+                            </div>
+                            <div class="exact-step-item" id="exactStep2">
+                                <strong>步骤2:</strong> 连接两点构造水平线段
+                            </div>
+                            <div class="exact-step-item" id="exactStep3">
+                                <strong>步骤3:</strong> 在刻度2上方构造垂直线段
+                            </div>
+                            <div class="exact-step-item" id="exactStep4">
+                                <strong>步骤4:</strong> 连接原点和上方点构造斜边
+                            </div>
+                            <div class="exact-step-item" id="exactStep5">
+                                <strong>步骤5:</strong> 以原点为圆心画弧找到√5
+                            </div>
+                            
+                            <div class="exact-progress-bar">
+                                <div class="exact-progress-fill" id="exactProgressFill"></div>
+                            </div>
+                            
+                            <div style="margin-top: 16px; padding: 10px; background: rgba(46, 204, 113, 0.15); border: 1px solid rgba(46, 204, 113, 0.4); border-radius: 6px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);">
+                                <div style="color: #2ecc71; font-size: 12px; font-weight: bold;">计算结果:</div>
+                                <div style="color: #fff; font-size: 11px; margin-top: 4px;" id="exactCalculationResult">
+                                    c = √(2² + 1²) = √5 ≈ 2.236
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="exact-controls">
+                        <div class="exact-vr-indicator">
+                            🏫 精确复刻：1:1还原参考图片，选择工具开始构造
+                        </div>
+                        <button class="exact-control-btn exact-primary-btn" id="exactNextStepBtn">➡️ 下一步</button>
+                        <button class="exact-control-btn exact-primary-btn" id="exactAutoConstructBtn">🎬 自动构造</button>
+                        <button class="exact-control-btn exact-secondary-btn" id="exactResetBtn">🔄 重置</button>
+                    </div>
+
+                    <div class="exact-device-info">
+                        📱 iPad Pro | 🏫 精确复刻环境
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class ExactNumberLineConstructor {
+            constructor() {
+                this.currentStep = 0;
+                this.currentTool = null;
+                this.points = [];
+                this.lines = [];
+                this.isAutoConstructing = false;
+                
+                this.init();
+            }
+
+            init() {
+                this.setupNumberLine();
+                this.bindEvents();
+                this.updateStepDisplay();
+            }
+
+            setupNumberLine() {
+                const numberLine = document.getElementById('exactNumberLine');
+                
+                // 创建刻度
+                for (let i = 0; i <= 5; i++) {
+                    const tick = document.createElement('div');
+                    tick.className = 'exact-tick';
+                    tick.style.left = `${i * 96}px`;
+                    
+                    const label = document.createElement('div');
+                    label.className = 'exact-tick-label';
+                    label.textContent = i;
+                    tick.appendChild(label);
+                    
+                    numberLine.appendChild(tick);
+                }
+            }
+
+            bindEvents() {
+                // 工具选择
+                document.getElementById('exactPointTool').addEventListener('click', () => this.selectTool('point'));
+                document.getElementById('exactLineTool').addEventListener('click', () => this.selectTool('line'));
+                document.getElementById('exactCompassTool').addEventListener('click', () => this.selectTool('compass'));
+                
+                // 控制按钮
+                document.getElementById('exactNextStepBtn').addEventListener('click', () => this.nextStep());
+                document.getElementById('exactAutoConstructBtn').addEventListener('click', () => this.autoConstruct());
+                document.getElementById('exactResetBtn').addEventListener('click', () => this.reset());
+                
+                // 构造区域点击
+                document.getElementById('exactConstructionArea').addEventListener('click', (e) => this.handleAreaClick(e));
+            }
+
+            selectTool(tool) {
+                this.currentTool = tool;
+                
+                // 更新工具按钮状态
+                document.querySelectorAll('.exact-tool-btn').forEach(btn => btn.classList.remove('active'));
+                document.getElementById('exact' + tool.charAt(0).toUpperCase() + tool.slice(1) + 'Tool').classList.add('active');
+                
+                // 更新提示
+                this.updateVRIndicator();
+            }
+
+            handleAreaClick(e) {
+                if (!this.currentTool || this.isAutoConstructing) return;
+                
+                const rect = e.currentTarget.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                if (this.currentTool === 'point') {
+                    this.addPoint(x, y);
+                }
+            }
+
+            addPoint(x, y) {
+                const point = document.createElement('div');
+                point.className = 'exact-construction-point';
+                point.style.left = `${x - 5}px`;
+                point.style.top = `${y - 5}px`;
+                
+                document.getElementById('exactConstructionArea').appendChild(point);
+                this.points.push({x, y, element: point});
+                
+                this.checkStepCompletion();
+            }
+
+            nextStep() {
+                if (this.currentStep < 5) {
+                    this.performStep(this.currentStep + 1);
+                }
+            }
+
+            async autoConstruct() {
+                if (this.isAutoConstructing) return;
+                
+                this.isAutoConstructing = true;
+                this.reset();
+                
+                for (let step = 1; step <= 5; step++) {
+                    await this.performStepWithDelay(step, 1000);
+                }
+                
+                this.isAutoConstructing = false;
+            }
+
+            async performStepWithDelay(step, delay) {
+                return new Promise(resolve => {
+                    setTimeout(() => {
+                        this.performStep(step);
+                        resolve();
+                    }, delay);
+                });
+            }
+
+            performStep(step) {
+                const constructionArea = document.getElementById('exactConstructionArea');
+                
+                switch(step) {
+                    case 1:
+                        // 在原点和刻度2处放置点
+                        this.addConstructionPoint(50, 150, '原点(0)');
+                        this.addConstructionPoint(242, 150, '点(2)');
+                        break;
+                        
+                    case 2:
+                        // 连接两点构造水平线段
+                        this.addConstructionLine(50, 150, 242, 150, 'horizontal', 'a = 2');
+                        break;
+                        
+                    case 3:
+                        // 构造垂直线段
+                        this.addConstructionPoint(242, 54, '点(2,1)');
+                        this.addConstructionLine(242, 150, 242, 54, 'vertical', 'b = 1');
+                        break;
+                        
+                    case 4:
+                        // 构造斜边
+                        this.addConstructionLine(50, 150, 242, 54, 'diagonal', 'c = √(2² + 1²) = √5 ≈ 2.236');
+                        break;
+                        
+                    case 5:
+                        // 画弧找交点
+                        this.addConstructionArc(50, 150, 215);
+                        this.addIntersectionPoint(265, 150, 'P(√5) ≈ 2.236');
+                        break;
+                }
+                
+                this.currentStep = step;
+                this.updateStepDisplay();
+                this.updateProgress();
+            }
+
+            addConstructionPoint(x, y, label) {
+                const point = document.createElement('div');
+                point.className = 'exact-construction-point';
+                point.style.left = `${x - 5}px`;
+                point.style.top = `${y - 5}px`;
+                
+                if (label) {
+                    const labelEl = document.createElement('div');
+                    labelEl.className = 'exact-label';
+                    labelEl.textContent = label;
+                    labelEl.style.left = `${x + 10}px`;
+                    labelEl.style.top = `${y - 25}px`;
+                    document.getElementById('exactConstructionArea').appendChild(labelEl);
+                }
+                
+                document.getElementById('exactConstructionArea').appendChild(point);
+            }
+
+            addConstructionLine(x1, y1, x2, y2, type, label) {
+                const line = document.createElement('div');
+                line.className = `exact-construction-line exact-${type}-line`;
+                
+                if (type === 'horizontal') {
+                    line.style.left = `${Math.min(x1, x2)}px`;
+                    line.style.top = `${y1 - 2}px`;
+                    line.style.width = `${Math.abs(x2 - x1)}px`;
+                } else if (type === 'vertical') {
+                    line.style.left = `${x1 - 2}px`;
+                    line.style.top = `${Math.min(y1, y2)}px`;
+                    line.style.height = `${Math.abs(y2 - y1)}px`;
+                } else if (type === 'diagonal') {
+                    const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+                    const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+                    
+                    line.style.left = `${x1}px`;
+                    line.style.top = `${y1 - 2}px`;
+                    line.style.width = `${length}px`;
+                    line.style.transform = `rotate(${angle}deg)`;
+                }
+                
+                if (label) {
+                    const labelEl = document.createElement('div');
+                    labelEl.className = 'exact-label';
+                    labelEl.textContent = label;
+                    labelEl.style.left = `${(x1 + x2) / 2 + 10}px`;
+                    labelEl.style.top = `${(y1 + y2) / 2 - 25}px`;
+                    document.getElementById('exactConstructionArea').appendChild(labelEl);
+                }
+                
+                document.getElementById('exactConstructionArea').appendChild(line);
+            }
+
+            addConstructionArc(centerX, centerY, radius) {
+                const arc = document.createElement('div');
+                arc.className = 'exact-construction-arc';
+                arc.style.left = `${centerX - radius}px`;
+                arc.style.top = `${centerY - radius}px`;
+                arc.style.width = `${radius * 2}px`;
+                arc.style.height = `${radius * 2}px`;
+                
+                document.getElementById('exactConstructionArea').appendChild(arc);
+            }
+
+            addIntersectionPoint(x, y, label) {
+                const point = document.createElement('div');
+                point.className = 'exact-intersection-point';
+                point.style.left = `${x - 7}px`;
+                point.style.top = `${y - 7}px`;
+                
+                if (label) {
+                    const labelEl = document.createElement('div');
+                    labelEl.className = 'exact-label';
+                    labelEl.textContent = label;
+                    labelEl.style.left = `${x + 15}px`;
+                    labelEl.style.top = `${y - 25}px`;
+                    labelEl.style.background = 'rgba(231, 76, 60, 0.92)';
+                    labelEl.style.borderColor = '#e74c3c';
+                    document.getElementById('exactConstructionArea').appendChild(labelEl);
+                }
+                
+                document.getElementById('exactConstructionArea').appendChild(point);
+            }
+
+            updateStepDisplay() {
+                for (let i = 1; i <= 5; i++) {
+                    const stepEl = document.getElementById(`exactStep${i}`);
+                    stepEl.classList.remove('active', 'completed');
+                    
+                    if (i < this.currentStep) {
+                        stepEl.classList.add('completed');
+                    } else if (i === this.currentStep) {
+                        stepEl.classList.add('active');
+                    }
+                }
+            }
+
+            updateProgress() {
+                const progress = (this.currentStep / 5) * 100;
+                document.getElementById('exactProgressFill').style.width = `${progress}%`;
+            }
+
+            updateVRIndicator() {
+                const indicator = document.querySelector('.exact-vr-indicator');
+                const toolNames = {
+                    'point': '点工具',
+                    'line': '线段工具',
+                    'compass': '圆规工具'
+                };
+                
+                if (this.currentTool) {
+                    indicator.textContent = `🏫 精确复刻：已选择${toolNames[this.currentTool]}，开始构造√5`;
+                }
+            }
+
+            checkStepCompletion() {
+                // 检查当前步骤是否完成的逻辑
+                if (this.points.length >= 2 && this.currentStep === 0) {
+                    this.currentStep = 1;
+                    this.updateStepDisplay();
+                    this.updateProgress();
+                }
+            }
+
+            reset() {
+                // 清除所有构造元素
+                const constructionArea = document.getElementById('exactConstructionArea');
+                const elementsToRemove = constructionArea.querySelectorAll('.exact-construction-point, .exact-construction-line, .exact-construction-arc, .exact-intersection-point, .exact-label');
+                elementsToRemove.forEach(el => el.remove());
+                
+                // 重置状态
+                this.currentStep = 0;
+                this.points = [];
+                this.lines = [];
+                this.currentTool = null;
+                
+                // 重置UI
+                document.querySelectorAll('.exact-tool-btn').forEach(btn => btn.classList.remove('active'));
+                this.updateStepDisplay();
+                this.updateProgress();
+                
+                // 重置提示
+                document.querySelector('.exact-vr-indicator').textContent = '🏫 精确复刻：1:1还原参考图片，选择工具开始构造';
+            }
+        }
+
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', () => {
+            new ExactNumberLineConstructor();
+        });
+    </script>
+</body>
+</html>
